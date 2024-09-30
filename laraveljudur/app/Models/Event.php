@@ -10,12 +10,17 @@ class Event extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 
-        'land_id', 
-        'description', 
-        'date', 
-        'time',
-        'expected_organizer_number', 
-        'status'
+        'title', 'land_id', 'description', 'date', 'time', 
+        'expected_organizer_number', 'status', 'image', 'location', 'duration',
     ];
+
+    public function land()
+    {
+        return $this->belongsTo(Land::class);
+    }
+    public function feedbacks()
+    {
+        return $this->hasMany(Feedback::class);
+    }
+
 }
