@@ -2,22 +2,43 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\ItemDonation;
+use App\Models\Auction;
+use App\Models\Bid;
+use App\Models\Donor;
+use App\Models\Event;
+use App\Models\Financial;
+use App\Models\Land;
+use App\Models\LandInspection;
+use App\Models\Notification;
+use App\Models\Volunteer;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
+    public function run()
     {
-        // User::factory(10)->create();
+        // Seed roles
+        $this->call(RoleSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $this->call(StatusSeeder::class);
+
+        User::factory(5)->create();
+
+        ItemDonation::factory(5)->create();
+
+        Auction::factory(3)->create();
+
+        Bid::factory(2)->create();
+
+        Event::factory(2)->create();
+        Land::factory(2)->create();
+        Notification::factory(2)->create();
+        Volunteer::factory(2)->create();
+        Donor::factory(2)->create();
+        LandInspection::factory(2)->create();
+        Financial::factory(2)->create();
+
     }
 }

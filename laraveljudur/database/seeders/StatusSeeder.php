@@ -1,0 +1,27 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\ItemStatus;
+use Illuminate\Database\Seeder;
+use App\Models\LandStatus;
+use App\Models\VolunteerStatus;
+
+class StatusSeeder extends Seeder
+{
+    public function run()
+    {
+        LandStatus::create(['name' => 'Pending']);
+        LandStatus::create(['name' => 'Accepted']);
+        LandStatus::create(['name' => 'Rejected']);
+
+        VolunteerStatus::create(['name' => 'Pending']);
+        VolunteerStatus::create(['name' => 'Accepted']);
+        VolunteerStatus::create(['name' => 'Rejected']);
+
+        ItemStatus::create(['status' => 'Pending']);
+        ItemStatus::create(['status' => 'Accepted']);
+        ItemStatus::create(['status' => 'Rejected']);
+
+    }
+}
