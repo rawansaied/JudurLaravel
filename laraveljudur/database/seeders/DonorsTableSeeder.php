@@ -11,11 +11,10 @@ class DonorsTableSeeder extends Seeder
     {
         DB::table('donors')->insert([
             [
-                'user_id' => 3,
-                'donor_id_number' => 'D987654321',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
+                'user_id' => 2, // Assuming user_id 2 is a Donor
+                'donor_id_number' => 'DON123456',
+            ],
+            // Add more donors as needed
         ]);
     }
 }

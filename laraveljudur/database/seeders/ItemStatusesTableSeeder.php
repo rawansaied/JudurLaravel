@@ -5,13 +5,13 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class VolunteerStatusesTableSeeder extends Seeder
+class ItemStatusesTableSeeder extends Seeder
 {
     public function run()
     {
-        DB::table('volunteer_statuses')->insert([
-            ['name' => 'Active'],
-            ['name' => 'Inactive'],
+        DB::table('item_statuses')->insert([
+            ['status' => 'New'],
+            ['status' => 'Used'],
             // Add more statuses as needed
         ]);
     }

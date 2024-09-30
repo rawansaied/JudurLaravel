@@ -11,15 +11,14 @@ class ItemDonationsTableSeeder extends Seeder
     {
         DB::table('item_donations')->insert([
             [
-                'donor_id' => 1,  // Ensure this donor exists in the 'donors' table
-                'item_name' => '50kg of Rice',
+                'donor_id' => 1, // Assuming donor_id 1 exists
+                'item_name' => 'Old Laptop',
                 'value' => 150.00,
                 'is_valuable' => true,
-                'condition' => 'New',
-                'status_id' => 1,  // Ensure this status exists in the 'item_statuses' table
-                'created_at' => now(),
-                'updated_at' => now(),
+                'condition' => 'Good',
+                'status_id' => 1, // Assuming status_id 1 is New
             ],
+            // Add more items as needed
         ]);
     }
 }

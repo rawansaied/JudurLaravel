@@ -11,15 +11,14 @@ class LandsTableSeeder extends Seeder
     {
         DB::table('lands')->insert([
             [
-                'donor_id' => 1,  // Ensure that a donor with ID 1 exists in the 'donors' table
-                'description' => 'A plot of land in the countryside.',
-                'land_size' => 5000.00,
-                'address' => '123 Countryside Lane',
-                'proof_of_ownership' => 'landproof1.pdf',
-                'status_id' => 1,  // Ensure that a status with ID 1 exists in the 'land_statuses' table
-                'created_at' => now(),
-                'updated_at' => now(),
+                'donor_id' => 1, // Assuming donor_id 1 exists
+                'description' => 'A fertile land suitable for farming',
+                'land_size' => 10.5,
+                'address' => '123 Main St, Springfield',
+                'proof_of_ownership' => 'ownership_document.pdf',
+                'status_id' => 1, // Assuming status_id 1 is Available
             ],
+            // Add more lands as needed
         ]);
     }
 }

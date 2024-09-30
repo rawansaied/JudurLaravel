@@ -8,6 +8,10 @@ use Laravel\Sanctum\HasApiTokens;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Donor;
+use App\Models\Volunteer;
+
+
 
 class User extends Authenticatable
 {
@@ -45,6 +49,17 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+     // Relationship to Donor
+     public function donor()
+     {
+         return $this->hasOne(Donor::class);
+     }
+ 
+     // Relationship to Volunteer
+     public function volunteer()
+     {
+         return $this->hasOne(volunteer::class);
+     }
 }
 
 

@@ -11,13 +11,13 @@ class VolunteersTableSeeder extends Seeder
     {
         DB::table('volunteers')->insert([
             [
-                'user_id' => 2,
-                'skills' => 'Event Planning, Organizing',
+                'user_id' => 3, // Assuming user_id 3 is a Volunteer
+                'skills' => 'First Aid, Cooking',
                 'availability' => 'Weekends',
-                'aim' => 'To support community events.',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
+                'volunteer_status' => 1, // Assuming status 1 is Active
+                'aim' => 'To help the community',
+            ],
+            // Add more volunteers as needed
         ]);
     }
 }

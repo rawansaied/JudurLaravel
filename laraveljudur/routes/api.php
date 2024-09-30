@@ -10,6 +10,8 @@ Route::get('/user', function (Request $request) {
 
 // Register a new user
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register/donor', [AuthController::class, 'registerDonor']);
+Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 
 // Login a user
 Route::post('/login', [AuthController::class, 'login']);

@@ -9,19 +9,15 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            RolesTableSeeder::class,                     // Corrected seeder for the 'roles' table
-            UsersTableSeeder::class,               // Seeder for the 'users' table
-            VolunteerStatusesTableSeeder::class,   // Seeder for the 'volunteer_statuses' table
-            VolunteersTableSeeder::class,          // Seeder for the 'volunteers' table
-            DonorsTableSeeder::class,              // Seeder for the 'donors' table
-            ItemDonationsTableSeeder::class,       // Seeder for the 'item_donations' table
-                  // Seeder for the 'item_statuses' table
-            FinancialsTableSeeder::class,          // Seeder for the 'financials' table
-            LandsTableSeeder::class,               // Seeder for the 'lands' table
-                      // Seeder for the 'events' table
-            NotificationsTableSeeder::class,       // Seeder for the 'notifications' table
-              
-                     // Seeder for the 'bids' table
+            RolesTableSeeder::class,              // Roles table first (used by Users table)
+            VolunteerStatusesTableSeeder::class,  // Volunteer statuses table
+            LandStatusesTableSeeder::class,       // Land statuses table
+            ItemStatusesTableSeeder::class,       // Item statuses table
+            UsersTableSeeder::class,              // Users table next (depends on Roles)
+            DonorsTableSeeder::class,             // Donors table (depends on Users)
+            VolunteersTableSeeder::class,         // Volunteers table (depends on Users and VolunteerStatuses)
+            LandsTableSeeder::class,              // Lands table (depends on Donors and LandStatuses)
+            ItemDonationsTableSeeder::class,      // Item Donations table (depends on Donors and ItemStatuses)
         ]);
     }
 }
