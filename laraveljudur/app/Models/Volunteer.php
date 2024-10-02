@@ -50,6 +50,8 @@ class Volunteer extends Model
         return $this->hasMany(Land::class);
     }
 
-
-    
+    public function volunteerStatus()
+    {
+        return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
+    }
 }

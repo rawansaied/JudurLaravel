@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -55,7 +56,7 @@ Route::get('/land-inspections/{volunteerId}', [VolunteerAnalyticsController::cla
 Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
 
 // Route to handle the form submission
-Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); // Ensure this matches your method name
+Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); 
 
 
 
@@ -83,3 +84,16 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/donor/dashboard', [DonorController::class, 'dashboard'])->name('donor.dashboard');
 });
+
+
+// Dashboard Routes Start
+
+Route::get('/donors', [AdminController::class, 'getDonors']);
+Route::get('/volunteers', [AdminController::class, 'getVolunteers']);
+Route::get('/donor/{id}', [AdminController::class, 'donorDetails']);
+Route::get('/volunteer/{id}', [AdminController::class, 'volunteerDetails']);
+
+Route::get('/pending-volunteers', [AdminController::class, 'getPendingVolunteers']);
+Route::put('/volunteer/{id}/status', [AdminController::class, 'updateStatus']);
+
+// Dashboard Routes End
