@@ -22,4 +22,10 @@ class Volunteer extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Relationship to Volunteer Status
+    public function volunteerStatus()
+    {
+        return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
+    }
 }

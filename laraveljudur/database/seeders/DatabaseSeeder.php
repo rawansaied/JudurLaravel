@@ -19,20 +19,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-<<<<<<< HEAD
-        $this->call([
-            RolesTableSeeder::class,              // Roles table first (used by Users table)
-            VolunteerStatusesTableSeeder::class,  // Volunteer statuses table
-            LandStatusesTableSeeder::class,       // Land statuses table
-            ItemStatusesTableSeeder::class,       // Item statuses table
-            UsersTableSeeder::class,              // Users table next (depends on Roles)
-            DonorsTableSeeder::class,             // Donors table (depends on Users)
-            VolunteersTableSeeder::class,         // Volunteers table (depends on Users and VolunteerStatuses)
-            LandsTableSeeder::class,              // Lands table (depends on Donors and LandStatuses)
-            ItemDonationsTableSeeder::class,      // Item Donations table (depends on Donors and ItemStatuses)
-        ]);
-=======
-        // Seed roles
         $this->call(RoleSeeder::class);
 
         $this->call(StatusSeeder::class);
@@ -53,6 +39,5 @@ class DatabaseSeeder extends Seeder
         LandInspection::factory(2)->create();
         Financial::factory(2)->create();
 
->>>>>>> omar
     }
 }

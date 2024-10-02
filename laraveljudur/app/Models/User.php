@@ -49,15 +49,14 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
      // Relationship to Donor
-     public function donor()
+     public function donors()
      {
-         return $this->hasOne(Donor::class);
+         return $this->hasMany(Donor::class);
      }
  
-     // Relationship to Volunteer
-     public function volunteer()
+     public function volunteers()
      {
-         return $this->hasOne(volunteer::class);
+         return $this->hasMany(Volunteer::class);
      }
 }
 
