@@ -17,4 +17,8 @@ class Land extends Model
         'proof_of_ownership', 
         'status_id'
     ];
+    public function donor()
+    {
+        return $this->belongsTo(Donor::class);
+    }
 }
