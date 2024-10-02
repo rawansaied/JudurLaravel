@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VolunteerAnalyticsController;
 use App\Http\Controllers\ContactUsController;
+use App\Http\Controllers\DonationController;
+use App\Http\Controllers\DonorController;
 
 
 Route::get('/user', function (Request $request) {
@@ -16,7 +18,10 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/register/donor', [AuthController::class, 'registerDonor']);
 Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 // Login a user
+
 Route::post('/login', [AuthController::class, 'login']);
+
+
 
 // Logout a user (requires authentication)
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
@@ -48,3 +53,23 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 
 
 
+
+////
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/donate-land', [DonationController::class, 'donateLand']);
+    Route::post('/donate-item', [DonationController::class, 'donateItem']);
+    Route::post('/donate-money', [DonationController::class, 'donateMoney']);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/donor/dashboard', [DonorController::class, 'dashboard']);
+    Route::get('/donor/view-details/{type}', [DonorController::class, 'viewDetails']);
+});
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/donor/dashboard', [DonorController::class, 'dashboard'])->name('donor.dashboard');
+});

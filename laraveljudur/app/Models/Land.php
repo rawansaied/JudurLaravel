@@ -31,4 +31,8 @@ class Land extends Model
     {
         return $this->hasMany(LandInspection::class);
     }
+    public function donor()
+    {
+        return $this->belongsTo(Donor::class);
+    }
 }

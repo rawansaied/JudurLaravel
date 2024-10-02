@@ -19,5 +19,23 @@ class Donor extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Relationship to Financial Donations
+    public function financialDonations()
+    {
+        return $this->hasMany(Financial::class, 'donor_id');
+    }
+
+    // Relationship to Item Donations
+    public function itemDonations()
+    {
+        return $this->hasMany(ItemDonation::class, 'donor_id');
+    }
+
+    // Relationship to Land Donations
+    public function landDonations()
+    {
+        return $this->hasMany(Land::class, 'donor_id');
+    }
 }
 
