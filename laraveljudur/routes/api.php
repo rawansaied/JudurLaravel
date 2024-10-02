@@ -49,13 +49,6 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 
 
 
-
-
-
-
-
-////
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/donate-land', [DonationController::class, 'donateLand']);
     Route::post('/donate-item', [DonationController::class, 'donateItem']);
