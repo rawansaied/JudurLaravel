@@ -10,11 +10,25 @@ class Land extends Model
     use HasFactory;
 
     protected $fillable = [
-        'donor_id', 
-        'description', 
-        'land_size', 
-        'address', 
-        'proof_of_ownership', 
+        'donor_id',
+        'description',
+        'land_size',
+        'address',
+        'proof_of_ownership',
         'status_id'
     ];
+
+    public function lands()
+    {
+        return $this->belongsToMany(Volunteer::class, 'examiner_Land');
+    }
+    public function volunteer()
+    {
+        return $this->belongsTo(Volunteer::class);
+    }
+
+    public function inspections()
+    {
+        return $this->hasMany(LandInspection::class);
+    }
 }
