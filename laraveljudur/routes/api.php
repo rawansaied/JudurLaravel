@@ -3,6 +3,12 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
+
+
+Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
+
+Route::get('/profile/{id}', [UserController::class, 'getProfile']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
