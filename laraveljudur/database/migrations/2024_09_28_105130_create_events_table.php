@@ -17,8 +17,8 @@ class CreateEventsTable extends Migration
             $table->time('time');
             $table->integer('expected_organizer_number');
             $table->string('status');
-            $table->string('image')->nullable(); // Add the image column
-            $table->string('location')->nullable(); // Add the location column
+            $table->string('image')->nullable(); 
+            $table->string('location')->nullable(); 
             $table->timestamps();
             $table->string('duration')->nullable();
             $table->foreign('land_id')->references('id')->on('lands');

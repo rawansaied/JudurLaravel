@@ -19,9 +19,11 @@ class EventFactory extends Factory
             'time' => $this->faker->time(),
             'expected_organizer_number' => $this->faker->numberBetween(10, 100),
             'status' => $this->faker->randomElement(['Scheduled', 'Completed', 'Cancelled']),
-            'image' => $this->faker->imageUrl(400, 300, 'events', true), // Generates a random image URL
-            'location' => $this->faker->city(), // Generates a random city name for the location
+            'image' => $this->faker->imageUrl(400, 300, 'events', true), 
+            'location' => $this->faker->city(), 
             'duration' => $this->faker->randomElement(['30 minutes', '1 hour', '2 hours']),
+            'people_helped' => $this->faker->numberBetween(0, 1000), 
+            'goods_distributed' => $this->faker->randomFloat(2, 0, 10000), 
         ];
     }
 }

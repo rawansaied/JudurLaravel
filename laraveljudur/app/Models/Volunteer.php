@@ -20,6 +20,7 @@ class Volunteer extends Model
         'availability',
         'volunteer_status',
         'aim',
+        'examiner',
     ];
 
     /**

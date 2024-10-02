@@ -21,10 +21,11 @@ class Event extends Model
         'time',
         'expected_organizer_number',
         'status',
-        'duration' ,
-       
-        'people_helped',
-        'goods_distributed',// Assuming you want to track duration for each event
+        'image',
+        'location',
+        'duration',
+        'people_helped',       
+        'goods_distributed',   
     ];
 
     /**
