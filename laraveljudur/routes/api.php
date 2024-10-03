@@ -96,4 +96,10 @@ Route::get('/volunteer/{id}', [AdminController::class, 'volunteerDetails']);
 Route::get('/pending-volunteers', [AdminController::class, 'getPendingVolunteers']);
 Route::put('/volunteer/{id}/status', [AdminController::class, 'updateStatus']);
 
+Route::get('/pending-examiners', [AdminController::class, 'getPendingExaminers']);
+Route::get('/examiner/{id}', [AdminController::class, 'examinerDetails']);
+Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStatus']);
+
+
+
 // Dashboard Routes End

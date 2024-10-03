@@ -55,4 +55,9 @@ class Volunteer extends Model
     {
         return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
     }
+
+    public function examiner()
+    {
+        return $this->hasOne(Examiner::class);
+    }
 }

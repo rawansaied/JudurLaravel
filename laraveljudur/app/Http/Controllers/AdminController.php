@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Donor;
+use App\Models\Examiner;
 use App\Models\Volunteer;
 use Illuminate\Http\Request;
 
@@ -76,4 +77,32 @@ class AdminController extends Controller
         return response()->json(['success' => false], 500);
     }
 }
+
+public function getPendingExaminers()
+{
+    $examiners = Examiner::with('user')
+        ->where('Examiner_status', 1)
+        ->get();
+
+    return response()->json($examiners);
+}
+
+public function examinerDetails($id)
+{
+    $examiner = Examiner::with(['user', 'examinerStatus'])->findOrFail($id);
+
+    return response()->json($examiner);
+}
+
+public function updateExaminerStatus(Request $request, $id)
+{
+    $examiner = Examiner::findOrFail($id);
+    $examiner->examiner_status = $request->input('status');
+    if ($examiner->save()) {
+        return response()->json(['success' => true]);
+    } else {
+        return response()->json(['success' => false], 500);
+    }
+}
+
 }

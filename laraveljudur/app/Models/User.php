@@ -67,4 +67,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Volunteer::class);
     }
+
+    public function examiners()
+    {
+        return $this->hasMany(Examiner::class);
+    }
 }
