@@ -17,4 +17,21 @@ class ItemDonation extends Model
         'condition', 
         'status_id'
     ];
+
+
+
+
+
+    public function auctions()
+    {
+        return $this->hasMany(Auction::class, 'item_id');
+    }
+
+
+
+
+
+
+
+
 }
