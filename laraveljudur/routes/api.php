@@ -12,6 +12,11 @@ use App\Http\Controllers\DonationController;
 use App\Http\Controllers\DonorController;
 
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\LandInspectionController;
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::apiResource('land-inspections', LandInspectionController::class);
+});
 
 
 Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
@@ -44,7 +49,7 @@ Route::get('/test', function () {
 });
 
 
-//volunteer 
+//volunteer
 Route::get('/volunteer-summary/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerSummary']);
 Route::get('/volunteer-activity/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerActivityOverTime']);
 Route::get('/volunteer/by-user/{userId}', [VolunteerAnalyticsController::class, 'getVolunteerIdByUserId']);
@@ -58,7 +63,7 @@ Route::get('/land-inspections/{volunteerId}', [VolunteerAnalyticsController::cla
 Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
 
 // Route to handle the form submission
-Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); 
+Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
 
 
 
