@@ -15,4 +15,9 @@ class Financial extends Model
         'currency', 
         'payment_method'
     ];
+
+    public function donor()
+    {
+        return $this->belongsTo(Donor::class);
+    }
 }

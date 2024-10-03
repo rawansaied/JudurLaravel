@@ -15,7 +15,7 @@ use App\Models\Volunteer;
 
 class User extends Authenticatable
 {
-    use HasFactory,HasApiTokens,  Notifiable;
+    use HasFactory, HasApiTokens,  Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -48,18 +48,28 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-     // Relationship to Donor
-     public function donor()
-     {
-         return $this->hasOne(Donor::class);
-     }
- 
-     // Relationship to Volunteer
-     public function volunteer()
-     {
-         return $this->hasOne(volunteer::class);
-     }
+
+
+    public function isExaminer()
+    {
+        return $this->is_examiner;
+    }
+    public function inspections()
+    {
+        return $this->hasMany(LandInspection::class, 'examiner_id');
+    }
+    public function donors()
+    {
+        return $this->hasMany(Donor::class);
+    }
+
+    public function volunteers()
+    {
+        return $this->hasMany(Volunteer::class);
+    }
+
+    public function examiners()
+    {
+        return $this->hasMany(Examiner::class);
+    }
 }
-
-
-

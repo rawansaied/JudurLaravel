@@ -34,4 +34,8 @@ class ItemDonation extends Model
 
 
 
+    public function donor()
+    {
+        return $this->belongsTo(Donor::class);
+    }
 }

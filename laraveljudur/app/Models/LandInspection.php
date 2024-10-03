@@ -19,4 +19,14 @@ class LandInspection extends Model
         'general_condition', 
         'photo_path',
     ];
+
+    public function land()
+    {
+        return $this->belongsTo(Land::class);
+    }
+
+    public function examiner()
+    {
+        return $this->belongsTo(User::class, 'examiner_id');
+    }
 }

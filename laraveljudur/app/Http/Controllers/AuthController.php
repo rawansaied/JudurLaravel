@@ -8,15 +8,16 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Donor;
 use App\Models\Volunteer;
-
+use Illuminate\Support\Facades\DB;  
 use Illuminate\Support\Facades\Log;
-
 
 class AuthController extends Controller
 {
     // Register a new user
     public function register(Request $request)
     {
+        Log::info('Register request received', $request->all());
+        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -24,134 +25,157 @@ class AuthController extends Controller
             'role_id' => 'required',
             'age' => 'required',
             'phone' => 'required',
-
-
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
-            'age' => $request->age,
-            'phone' => $request->phone,
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role_id' => $request->role_id,
+                'age' => $request->age,
+                'phone' => $request->phone,
+            ]);
 
+            $token = $user->createToken('auth_token')->plainTextToken;
 
-        ]);
+            Log::info('User registered successfully', ['user_id' => $user->id]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error registering user: ' . $e->getMessage());
+            return response()->json(['message' => 'Error registering user'], 500);
+        }
     }
+
     public function registerDonor(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+        Log::info('Register Donor request received', $request->all());
+
+        $validated = $request->validate([
+            'name' => 'required|string|min:2',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'donor_id_number' => 'required|string', // Specific to donor
+            'age' => 'required|integer',
+            'phone' => 'required|string',
         ]);
 
-        // Create the user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role_id' => 2, // Assuming role_id 2 is for Donor
-        ]);
+        DB::beginTransaction();
+        try {
+            Log::info('Creating donor user', ['email' => $validated['email']]);
+            
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role_id' => 2,
+                'age' => $validated['age'],
+                'phone' => $validated['phone'],
+            ]);
 
-        // Create the donor
-        Donor::create([
-            'user_id' => $user->id,
-            'donor_id_number' => $request->donor_id_number,
-        ]);
+            $donorIdNumber = uniqid('DONOR-');
+            Log::info('Creating donor record', ['user_id' => $user->id]);
 
-        // Generate token
-        $token = $user->createToken('auth_token')->plainTextToken;
+            Donor::create([
+                'user_id' => $user->id,
+                'donor_id_number' => $donorIdNumber,
+            ]);
 
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user,
-        ]);
+            DB::commit();
+            Log::info('Donor registered successfully', ['user_id' => $user->id]);
+
+            return response()->json(['message' => 'Donor registered successfully', 'data' => $user], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error registering donor: ' . $e->getMessage());
+            return response()->json(['message' => 'Error registering donor'], 500);
+        }
     }
 
     // Register a volunteer
     public function registerVolunteer(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+        Log::info('Register Volunteer request received', $request->all());
+
+        $validated = $request->validate([
+            'name' => 'required|string|min:2',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'skills' => 'required|string', // Specific to volunteer
+            'age' => 'required|integer',
+            'phone' => 'required|string',
+            'skills' => 'required|string',
             'availability' => 'required|string',
             'aim' => 'required|string',
         ]);
 
-        // Create the user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role_id' => 3, // Assuming role_id 3 is for Volunteer
-        ]);
+        try {
+            Log::info('Creating volunteer user', ['email' => $validated['email']]);
 
-        // Create the volunteer
-        Volunteer::create([
-            'user_id' => $user->id,
-            'skills' => $request->skills,
-            'availability' => $request->availability,
-            'aim' => $request->aim,
-        ]);
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role_id' => 3, // Role ID for Volunteer
+                'age' => $validated['age'],
+                'phone' => $validated['phone'],
+            ]);
 
-        // Generate token
-        $token = $user->createToken('auth_token')->plainTextToken;
+            Log::info('Creating volunteer record', ['user_id' => $user->id]);
 
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user,
-        ]);
+            Volunteer::create([
+                'user_id' => $user->id,
+                'skills' => $validated['skills'],
+                'availability' => $validated['availability'],
+                'aim' => $validated['aim'],
+            ]);
+
+            Log::info('Volunteer registered successfully', ['user_id' => $user->id]);
+
+            return response()->json(['message' => 'Volunteer registered successfully', 'data' => $user], 201);
+        } catch (\Exception $e) {
+            Log::error('Error registering volunteer: ' . $e->getMessage());
+            return response()->json(['message' => 'Error registering volunteer'], 500);
+        }
     }
 
     // Log in a user
     public function login(Request $request)
     {
+        Log::info('Login request received', $request->only('email'));
+
         $credentials = $request->only('email', 'password');
 
         if (!Auth::attempt($credentials)) {
+            Log::warning('Invalid login attempt', ['email' => $request->email]);
             return response()->json(['message' => 'Invalid login details'], 401);
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        Log::info('User logged in', ['user_id' => $user->id]);
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'message' => 'u r Logged ',
+            'message' => 'You are logged in',
             'user' => $user,
-
-
-
         ]);
     }
-
-  
 
     public function logout(Request $request)
     {
         try {
             $request->user()->tokens()->delete();
-    
+            Log::info('User logged out', ['user_id' => $request->user()->id]);
+
             return response()->json(['message' => 'Logged out successfully']);
         } catch (\Exception $e) {
+            Log::error('Logout failed: ' . $e->getMessage());
             return response()->json(['error' => 'Logout failed', 'message' => $e->getMessage()], 500);
         }
     }
-    
-
-};
+}
