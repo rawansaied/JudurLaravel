@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VolunteerAnalyticsController;
 use App\Http\Controllers\ContactUsController;
-
+use Illuminate\Support\Facades\Mail;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -42,7 +42,13 @@ Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('c
 // Route to handle the form submission
 Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); // Ensure this matches your method name
 
-
+Route::get('/send-test-email', function () {
+    Mail::raw('This is a test email from Judur!', function ($message) {
+        $message->to('your-email@example.com')
+                ->subject('Test Email');
+    });
+    return 'Test email sent!';
+});
 
 
 
