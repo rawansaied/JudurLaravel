@@ -10,7 +10,13 @@ use App\Http\Controllers\DonorController;
 
 use App\Http\Controllers\UserController;
 
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\LandInspectionController;
+use App\Http\Controllers\LandController;
 
+Route::apiResource('land-inspections', LandInspectionController::class);
+Route::apiResource('lands', LandController::class);
+Route::apiResource('posts', PostController::class);
 Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
 
 Route::get('/profile/{id}', [UserController::class, 'getProfile']);
