@@ -1,22 +1,34 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AuctionController;
+
 use App\Http\Controllers\VolunteerAnalyticsController;
 use App\Http\Controllers\ContactUsController;
+use App\Http\Controllers\DonationController;
+use App\Http\Controllers\DonorController;
 use Illuminate\Support\Facades\Mail;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+use App\Http\Controllers\EventController;
+
+Route::get('/events', [EventController::class, 'index']);
+Route::get('/events/{id}', [EventController::class, 'show']);
 
 // Register a new user
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/register/donor', [AuthController::class, 'registerDonor']);
 Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 // Login a user
+
 Route::post('/login', [AuthController::class, 'login']);
+
+
 
 // Logout a user (requires authentication)
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
@@ -40,7 +52,42 @@ Route::get('/land-inspections/{volunteerId}', [VolunteerAnalyticsController::cla
 Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
 
 // Route to handle the form submission
-Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); // Ensure this matches your method name
+Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); 
+
+
+
+
+
+// Route::get('/auctions', [AuctionController::class, 'index']);
+
+
+
+
+// Route::apiResource('auctions', AuctionController::class);
+Route::get('/auctions', [AuctionController::class, 'index']);
+
+
+
+////
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/donate-land', [DonationController::class, 'donateLand']);
+    Route::post('/donate-item', [DonationController::class, 'donateItem']);
+    Route::post('/donate-money', [DonationController::class, 'donateMoney']);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/donor/dashboard', [DonorController::class, 'dashboard']);
+    Route::get('/donor/view-details/{type}', [DonorController::class, 'viewDetails']);
+});
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/donor/dashboard', [DonorController::class, 'dashboard'])->name('donor.dashboard');
+});
+
 
 Route::get('/send-test-email', function () {
     Mail::raw('This is a test email from Judur!', function ($message) {
@@ -49,8 +96,20 @@ Route::get('/send-test-email', function () {
     });
     return 'Test email sent!';
 });
+// Dashboard Routes Start
+
+Route::get('/donors', [AdminController::class, 'getDonors']);
+Route::get('/volunteers', [AdminController::class, 'getVolunteers']);
+Route::get('/donor/{id}', [AdminController::class, 'donorDetails']);
+Route::get('/volunteer/{id}', [AdminController::class, 'volunteerDetails']);
+
+Route::get('/pending-volunteers', [AdminController::class, 'getPendingVolunteers']);
+Route::put('/volunteer/{id}/status', [AdminController::class, 'updateStatus']);
+
+Route::get('/pending-examiners', [AdminController::class, 'getPendingExaminers']);
+Route::get('/examiner/{id}', [AdminController::class, 'examinerDetails']);
+Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStatus']);
 
 
 
-
-
+// Dashboard Routes End
