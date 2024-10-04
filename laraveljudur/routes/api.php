@@ -110,6 +110,16 @@ Route::get('/pending-examiners', [AdminController::class, 'getPendingExaminers']
 Route::get('/examiner/{id}', [AdminController::class, 'examinerDetails']);
 Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStatus']);
 
+use App\Http\Controllers\UserController;
+
+
+    Route::get('/users', [UserController::class, 'index']); 
+    Route::post('/users', [UserController::class, 'store']); 
+    Route::get('/users/{id}', [UserController::class,'show']); 
+    Route::put('/users/{id}', [UserController::class, 'update']); 
+    Route::delete('/users/{id}', [UserController::class, 'destroy']); 
+
+
 
 
 // Dashboard Routes End
