@@ -125,65 +125,6 @@ Route::post('/login', [AuthController::class, 'login']);
 
 
 
-
-
-
-
-
-// use Illuminate\Support\Facades\Password;
-// use Illuminate\Support\Facades\Hash;
-// use Illuminate\Auth\Events\PasswordReset;
-// use App\Models\User;
-// use Illuminate\Support\Str;
-
-// // Forgot password - send reset link
-// Route::post('/forgot-password', function (Request $request) {
-//     $request->validate(['email' => 'required|email']);
-
-//     $status = Password::sendResetLink($request->only('email'));
-
-//     return $status === Password::RESET_LINK_SENT
-//         ? response()->json(['message' => 'Reset link sent to your email.'], 200)
-//         : response()->json(['message' => 'Unable to send reset link.'], 500);
-// })->middleware('guest');
-
-// // Reset password form
-// Route::get('/reset-password/{token}', function (string $token) {
-//     return response()->json(['token' => $token], 200); // Angular will handle the reset form.
-// })->middleware('guest');
-
-// // Handle password reset
-// Route::post('/reset-password', function (Request $request) {
-//     $request->validate([
-//         'token' => 'required',
-//         'email' => 'required|email',
-//         'password' => 'required|min:8|confirmed',
-//     ]);
-
-//     $status = Password::reset(
-//         $request->only('email', 'password', 'password_confirmation', 'token'),
-//         function (User $user, string $password) {
-//             $user->forceFill([
-//                 'password' => Hash::make($password),
-//             ])->setRememberToken(Str::random(60));
-
-//             $user->save();
-
-//             event(new PasswordReset($user));
-//         }
-//     );
-
-//     return $status === Password::PASSWORD_RESET
-//         ? response()->json(['message' => 'Password reset successfully.'], 200)
-//         : response()->json(['message' => 'Password reset failed.'], 500);
-// })->middleware('guest');
-
-// // Define the password.reset route to avoid the error
-// Route::get('/reset-password/{token}', function (string $token) {
-//     return response()->json(['token' => $token], 200);
-// })->name('password.reset');
-
-
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
