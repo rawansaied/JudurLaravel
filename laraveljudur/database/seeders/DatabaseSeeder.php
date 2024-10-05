@@ -9,6 +9,7 @@ use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\Donor;
 use App\Models\Event;
+use App\Models\Examiner;
 use App\Models\Financial;
 use App\Models\Land;
 use App\Models\LandInspection;
@@ -19,11 +20,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // Seed roles
         $this->call(RoleSeeder::class);
-
         $this->call(StatusSeeder::class);
-
+        $this->call(ExaminerStatusesSeeder::class);
+        $this->call(EventStatusesSeeder::class);
         User::factory(5)->create();
 
         ItemDonation::factory(5)->create();
@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
         Donor::factory(2)->create();
         LandInspection::factory(2)->create();
         Financial::factory(2)->create();
+        Examiner::factory(3)->create();
 
     }
 }

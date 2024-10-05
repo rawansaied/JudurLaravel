@@ -48,25 +48,50 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    // Relationship to Donor
-    public function donor()
+
+
+    public function isExaminer()
     {
-        return $this->hasOne(Donor::class);
+        return $this->is_examiner;
+    }
+    public function inspections()
+    {
+        return $this->hasMany(LandInspection::class, 'examiner_id');
+    }
+    public function donors()
+    {
+        return $this->hasMany(Donor::class);
     }
 
-    // Relationship to Volunteer
-    public function volunteer()
+    public function volunteers()
     {
-        return $this->hasOne(volunteer::class);
+        return $this->hasMany(Volunteer::class);
     }
-    
-    public function isExaminer()
+
+    public function examiners()
+    {
+        return $this->hasMany(Examiner::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    // Relationship with user
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function examiner()
 {
-    return $this->is_examiner; // Assuming you have an is_examiner column in the users table
+    return $this->hasOne(Examiner::class);
 }
-public function inspections()
+
+public function volunteer()
 {
-    return $this->hasMany(LandInspection::class, 'examiner_id'); // Assuming 'examiner_id' in land_inspections references users
+    return $this->hasOne(Volunteer::class);
 }
 
 }

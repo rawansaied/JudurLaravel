@@ -143,7 +143,9 @@ class AuthController extends Controller
 
     // Log in a user
     public function login(Request $request)
-    {            \Log::info("Login attempt", $request->all());
+    {
+        Log::info('Login request received', $request->only('email'));
+
         $credentials = $request->only('email', 'password');
 
         if (!Auth::attempt($credentials)) {
