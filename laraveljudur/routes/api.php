@@ -181,6 +181,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+
 Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
