@@ -18,7 +18,7 @@ class EventFactory extends Factory
             'date' => $this->faker->date(),
             'time' => $this->faker->time(),
             'expected_organizer_number' => $this->faker->numberBetween(10, 100),
-            'status' => $this->faker->randomElement(['Scheduled', 'Completed', 'Cancelled']),
+            'event_status' => $this->faker->numberBetween(1, 4),
             'image' => $this->faker->imageUrl(400, 300, 'events', true), 
             'location' => $this->faker->city(), 
             'duration' => $this->faker->randomElement(['30 minutes', '1 hour', '2 hours']),

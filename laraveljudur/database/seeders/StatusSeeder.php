@@ -6,6 +6,7 @@ use App\Models\ItemStatus;
 use Illuminate\Database\Seeder;
 use App\Models\LandStatus;
 use App\Models\VolunteerStatus;
+use Illuminate\Container\Attributes\DB;
 
 class StatusSeeder extends Seeder
 {

@@ -62,6 +62,9 @@ class Volunteer extends Model
     {
         $this->examiner = false; // Set to false initially
         $this->volunteer_status = 'pending'; // Change the status to pending
-        $this->save();
+        $this->save();}
+    public function examiner()
+    {
+        return $this->hasOne(Examiner::class);
     }
 }
