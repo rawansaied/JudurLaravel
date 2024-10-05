@@ -27,7 +27,7 @@ Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->na
 
 
 
-
+Route::delete('/examiner-reports/{id}', [LandInspectionController::class, 'destroy']);
 Route::get('/examiner-reports', [LandInspectionController::class, 'index']);
 Route::get('/examiner-reports/report-details/{id}', [LandInspectionController::class, 'show']);
 Route::apiResource('land-inspections', LandInspectionController::class);

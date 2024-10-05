@@ -127,9 +127,17 @@ class LandInspectionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $report = LandInspection::find($id);
+    
+        if (!$report) {
+            return response()->json(['message' => 'Report not found'], 404);
+        }
+    
+        // Optional: Handle any relationships if necessary, e.g. cascade delete
+    
+        $report->delete();
+        return response()->json(['message' => 'Report deleted successfully'], 200);
     }
-
 }
