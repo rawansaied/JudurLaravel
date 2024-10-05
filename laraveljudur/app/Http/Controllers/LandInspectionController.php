@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Models\LandInspection;
 class LandInspectionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
-    {
-        return LandInspection::with('land')->get();
-    }
+    {  
+     
+        // Fetch reports with examiner details
+        $reports = LandInspection::with('examiner', 'land')->get();
 
+        return response()->json($reports);
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -33,11 +36,10 @@ class LandInspectionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        //
+    public function show($id) {
+        $report = LandInspection::with('examiner', 'land', 'inspections')->findOrFail($id);
+        return response()->json($report);
     }
-
     /**
      * Show the form for editing the specified resource.
      */

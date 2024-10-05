@@ -14,6 +14,9 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\LandInspectionController;
 use App\Http\Controllers\LandController;
 
+
+Route::get('/examiner-reports', [LandInspectionController::class, 'index']);
+Route::get('/examiner-reports/report-details/{id}', [LandInspectionController::class, 'show']);
 Route::apiResource('land-inspections', LandInspectionController::class);
 Route::apiResource('lands', LandController::class);
 Route::apiResource('posts', PostController::class);

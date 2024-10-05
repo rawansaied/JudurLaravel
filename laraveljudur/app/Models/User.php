@@ -60,6 +60,15 @@ class User extends Authenticatable
     {
         return $this->hasOne(volunteer::class);
     }
+    public function volunteers()
+    {
+        return $this->hasMany(Volunteer::class);
+    }
+
+    public function examiners()
+    {
+        return $this->hasMany(Volunteer::class, 'examiner_id');
+    }
     
     public function isExaminer()
 {
@@ -68,6 +77,10 @@ class User extends Authenticatable
 public function inspections()
 {
     return $this->hasMany(LandInspection::class, 'examiner_id'); // Assuming 'examiner_id' in land_inspections references users
+}
+public function landInspections()
+{
+    return $this->hasMany(LandInspection::class, 'examiner_id');
 }
 
 }

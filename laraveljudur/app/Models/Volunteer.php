@@ -20,6 +20,7 @@ class Volunteer extends Model
         'availability',
         'volunteer_status',
         'aim',
+        'examiner'
     ];
 
     /**
@@ -52,4 +53,10 @@ class Volunteer extends Model
 
 
     
+ 
+
+    public function examiner()
+    {
+        return $this->belongsTo(User::class, 'examiner_id');
+    }
 }

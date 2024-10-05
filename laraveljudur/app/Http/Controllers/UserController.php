@@ -7,6 +7,8 @@ use App\Models\Donor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log; 
@@ -67,14 +69,17 @@ class UserController extends Controller
     }
     public function updateProfile(Request $request, $id)
     {
+        Log::info('Update request received', ['id' => $id]);
+     
+
         // Validate the input data
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'age' => 'required|integer|min:1',
-            'phone' => 'required|string|size:10',
+            'age' => 'integer|min:1',
+            'phone' => 'string|size:10',
             'password' => 'nullable|string|min:6', // Only update password if provided
-            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048' // Profile picture validation
+            'profile_picture' => 'nullable|string'// File upload validation
         ]);
     
         // Find the user by ID
@@ -90,17 +95,21 @@ class UserController extends Controller
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
         }
-    
-        // Handle profile picture upload if provided
-        if ($request->hasFile('profile_picture')) {
-            $file = $request->file('profile_picture');
-            $filePath = $file->store('profile_pictures', 'public');
-            $user->profile_picture = $filePath;
+        if ($request->filled('profile_picture')) {
+            $imageData = explode(',', $request->input('profile_picture'))[1];
+            $imageName = 'profile_pictures/' . uniqid() . '.jpg'; // Ensure unique file names
+            
+            // Save the image to the public storage
+            Storage::disk('public')->put($imageName, base64_decode($imageData));
+            
+            // Update the user's profile picture path
+            $user->profile_picture = 'storage/' . $imageName; // Use storage path for public access
+           
         }
-    
-        // Save the changes
         $user->save();
-    
+        Log::info('Updated profile picture path:', ['path' => $user->profile_picture]);
+    Log::info('User updated successfully', ['user' => $user]);
+
         // Return a success response
         return response()->json([
             'message' => 'Profile updated successfully',
@@ -108,6 +117,4 @@ class UserController extends Controller
         ]);
     }
     
-    
-
 }

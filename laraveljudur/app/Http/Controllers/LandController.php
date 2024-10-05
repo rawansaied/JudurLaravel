@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Models\Land;
+use App\Models\LandInspection;
 class LandController extends Controller
 {
     /**
@@ -11,7 +12,9 @@ class LandController extends Controller
      */
     public function index()
     {
-        return Land::with('inspections')->get();
+
+          $lands = Land::with('inspections')->get();
+    return response()->json($lands);
     }
 
     /**
