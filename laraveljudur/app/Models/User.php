@@ -10,12 +10,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Donor;
 use App\Models\Volunteer;
-
-
+use Laravel\Cashier\Billable;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasApiTokens,  Notifiable;
+    use HasFactory, HasApiTokens,Billable,  Notifiable;
 
     /**
      * The attributes that are mass assignable.

@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Cashier\Billable;
+
 
 class Donor extends Model
 {
-    use HasFactory;
+    use HasFactory, Billable;
 
     protected $fillable = [
         'user_id',

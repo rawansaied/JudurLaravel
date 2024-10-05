@@ -45,6 +45,10 @@ Route::get('/volunteer/by-user/{userId}', [VolunteerAnalyticsController::class, 
 Route::get('/volunteer-events/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerEvents']);
 Route::get('/examiner-lands/{volunteerId}', [VolunteerAnalyticsController::class, 'getExaminerLandData']);
 Route::get('/land-inspections/{volunteerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
+Route::get('/pending-lands', [VolunteerAnalyticsController::class, 'getPendingLands']);
+Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
+
+
 
 
 
@@ -123,3 +127,12 @@ use App\Http\Controllers\UserController;
 
 
 // Dashboard Routes End
+
+
+
+Route::post('/donate', [DonationController::class, 'donate']);
+Route::post('/create-payment', [DonationController::class, 'createPayment']);
+
+
+
+

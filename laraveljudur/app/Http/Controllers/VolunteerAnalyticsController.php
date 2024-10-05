@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InspectionScheduled;
 use App\Models\Land;
 use App\Models\LandInspection;
 use App\Models\User;
 use App\Models\Volunteer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
-
-
-
+use Illuminate\Support\Facades\Mail;
 
 class VolunteerAnalyticsController extends Controller
 {
@@ -82,13 +80,52 @@ public function getExaminerLandData($volunteerId)
 public function getLandInspections($volunteerId)
 {
     $inspections = LandInspection::with('land')
-        ->where('examiner_id', $volunteerId) // or adjust based on your needs
+        ->where('examiner_id', $volunteerId) 
         ->get();
 
     Log::info('Land inspections data:', ['data' => $inspections]);
 
     return response()->json($inspections);
 }
+public function getPendingLands()
+{
+    $pendingStatusId = 3; 
+
+    $pendingLands = Land::where('status_id', $pendingStatusId)->get();
+
+    return response()->json($pendingLands);
+}
+
+public function notifyLandOwner(Request $request)
+{
+    // Validate the request to ensure landId and inspectionDate are provided
+    $request->validate([
+        'landId' => 'required|integer',
+        'inspectionDate' => 'required|date',
+    ]);
+
+    // Get the landId and inspectionDate from the request
+    $landId = $request->input('landId');
+    $inspectionDate = $request->input('inspectionDate');
+
+    // Find the land with the given ID
+    $land = Land::find($landId);
+
+    if (!$land || $land->status_id != 3) { // Ensure the land has pending status
+        return response()->json(['message' => 'Land with pending status not found.'], 404);
+    }
+
+    // Find the land owner (assuming donor_id relates to a User)
+    $landOwner = User::find($land->donor_id);
+
+    // if ($landOwner) {
+    //     Mail::to($landOwner->email)->send(new InspectionScheduled($land, $inspectionDate));
+    //     return response()->json(['message' => 'Land owner notified successfully.'], 200);
+    // } else {
+    //     return response()->json(['message' => 'Land owner not found.'], 404);
+    // }
+}
+
 
 
 
