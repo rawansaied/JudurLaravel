@@ -58,41 +58,37 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|min:2',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'phone' => 'required',
             'age' => 'required|integer',
-            'phone' => 'required|string',
+            'password' => 'required|min:6',
+            'profile_picture' => 'nullable|string',  // Validate base64 string if provided
         ]);
-
-        DB::beginTransaction();
-        try {
-            Log::info('Creating donor user', ['email' => $validated['email']]);
-            
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role_id' => 2,
-                'age' => $validated['age'],
-                'phone' => $validated['phone'],
-            ]);
-
-            $donorIdNumber = uniqid('DONOR-');
-            Log::info('Creating donor record', ['user_id' => $user->id]);
-
-            Donor::create([
-                'user_id' => $user->id,
-                'donor_id_number' => $donorIdNumber,
-            ]);
-
-            DB::commit();
-            Log::info('Donor registered successfully', ['user_id' => $user->id]);
-
-            return response()->json(['message' => 'Donor registered successfully', 'data' => $user], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error registering donor: ' . $e->getMessage());
-            return response()->json(['message' => 'Error registering donor'], 500);
+    
+        // Handle Base64 Image Upload
+        if ($request->profile_picture) {
+            // Decode the base64 image
+            $imageData = base64_decode($request->profile_picture);
+            $imageName = time() . '.png';  // Create a unique name for the image
+            $imagePath = 'profile_pictures/' . $imageName;
+    
+            // Store the image in the public storage folder
+            Storage::disk('public')->put($imagePath, $imageData);
+    
+            $validated['profile_picture'] = $imagePath;
         }
+    
+        // Create the user (example with User model)
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'age' => $validated['age'],
+            'password' => bcrypt($validated['password']),
+            'profile_picture' => $validated['profile_picture'] ?? null,  // Save the file path to the database
+        ]);
+    
+        return response()->json(['message' => 'Registration successful', 'user' => $user], 201);
+    
     }
 
     // Register a volunteer

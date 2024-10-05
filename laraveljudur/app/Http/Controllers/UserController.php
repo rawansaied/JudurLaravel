@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\User;
 use App\Models\Volunteer;
@@ -7,11 +9,9 @@ use App\Models\Donor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
-
-
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -19,59 +19,59 @@ class UserController extends Controller
     public function getProfile($id): JsonResponse
     {
         $user = User::findOrFail($id);
-    
+
         if ($user->role_id == 2) { // Donor
             $donor = Donor::where('user_id', $user->id)->first();
-            
+
             // Check if the donor exists
             if (!$donor) {
                 return response()->json([
                     'message' => 'Donor information not found'
                 ], 404);
             }
-            
+
             $latestItemDonation = $donor->latestItemDonation ?? null;
-    
+
             return response()->json([
                 'user' => $user,
                 'type' => 'donor',
                 'donor_info' => $donor,
                 'latest_item_donation' => $latestItemDonation,
             ]);
-        }
-        
-        elseif ($user->role_id == 3) { // Volunteer
+        } elseif ($user->role_id == 3) { // Volunteer
             $volunteer = Volunteer::where('user_id', $user->id)->first();
-            
+
             // Check if the volunteer exists
             if (!$volunteer) {
                 return response()->json([
                     'message' => 'Volunteer information not found'
                 ], 404);
             }
-    
+
             return response()->json([
                 'user' => $user,
                 'type' => 'volunteer',
                 'volunteer_info' => $volunteer,
             ]);
         }
-    
-        return response()->json([ 'user' => [
-            'name' => $user->name,
-            'email' => $user->email,
-            'age' => $user->age,
-            'phone' => $user->phone,
-            'password'=>$user->password,
-            'profile_picture' => asset('storage/' . $user->profile_picture), 
-        ],
-        'type' => 'unknown']);
+
+        return response()->json([
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'age' => $user->age,
+                'phone' => $user->phone,
+                'password' => $user->password,
+                'profile_picture' => asset('storage/' . $user->profile_picture),
+            ],
+            'type' => 'unknown'
+        ]);
     }
+
     public function updateProfile(Request $request, $id)
     {
         Log::info('Update request received', ['id' => $id]);
-     
-
+    
         // Validate the input data
         $request->validate([
             'name' => 'string|max:255',
@@ -79,7 +79,7 @@ class UserController extends Controller
             'age' => 'integer|min:1',
             'phone' => 'string|size:10',
             'password' => 'nullable|string|min:6', // Only update password if provided
-            'profile_picture' => 'nullable|string'// File upload validation
+            'profile_picture' => 'nullable|string' // Expecting Base64 image string
         ]);
     
         // Find the user by ID
@@ -95,21 +95,31 @@ class UserController extends Controller
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
         }
+    
+        // Handle profile picture if provided as Base64
         if ($request->filled('profile_picture')) {
-            $imageData = explode(',', $request->input('profile_picture'))[1];
-            $imageName = 'profile_pictures/' . uniqid() . '.jpg'; // Ensure unique file names
+            $imageData = $request->input('profile_picture');
             
-            // Save the image to the public storage
-            Storage::disk('public')->put($imageName, base64_decode($imageData));
+            // Extract the file extension
+            preg_match("/^data:image\/(.*?);base64,/", $imageData, $match);
+            $extension = $match[1];
             
-            // Update the user's profile picture path
-            $user->profile_picture = 'storage/' . $imageName; // Use storage path for public access
-           
+            // Remove the Base64 header
+            $image = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            $image = str_replace(' ', '+', $image);
+            
+            // Decode the Base64 string
+            $imageName = time() . '.' . $extension;
+            Storage::put('public/profile_pictures/' . $imageName, base64_decode($image));
+    
+            // Save the image name to the database
+            $user->profile_picture = $imageName;
         }
+    
         $user->save();
-        Log::info('Updated profile picture path:', ['path' => $user->profile_picture]);
-    Log::info('User updated successfully', ['user' => $user]);
-
+    
+        Log::info('User updated successfully', ['user' => $user]);
+    
         // Return a success response
         return response()->json([
             'message' => 'Profile updated successfully',
