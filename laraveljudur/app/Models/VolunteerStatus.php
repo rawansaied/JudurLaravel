@@ -10,6 +10,7 @@ class VolunteerStatus extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name'
+        'name',
+        'status'
     ];
 }
