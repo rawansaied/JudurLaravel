@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->text('content')->nullable(); // Optional content field
-            $table->string('image')->nullable(); // Optional image field
+            $table->text('content');
+            // Ensure this line exists
+            $table->string('image')->nullable();
             $table->string('category');
             $table->timestamps();
+        
+            // Foreign key constraint
         });
     }
     
