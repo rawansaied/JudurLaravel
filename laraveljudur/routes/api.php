@@ -132,4 +132,11 @@ Route::post('/dashboard/events/create', [AdminController::class, 'createEvent'])
 Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
 Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
+Route::get('/dashboard/auctions', [AdminController::class, 'getAuctions']);
+Route::get('/dashboard/auctions/{id}', [AdminController::class, 'auctionDetails']);
+Route::post('/dashboard/auctions', [AdminController::class, 'createAuction']);
+Route::get('/dashboard/statuses/auctions', [AdminController::class, 'getAuctionStatuses']);
+Route::get('/dashboard/items/auctions', [AdminController::class, 'getAuctionItems']);
+Route::put('/dashboard/auctions/{id}', [AdminController::class, 'editAuction']);
+Route::delete('/dashboard/auctions/{id}', [AdminController::class, 'deleteAuction']);
 // Dashboard Routes End
