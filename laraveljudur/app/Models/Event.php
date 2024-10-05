@@ -20,11 +20,12 @@ class Event extends Model
         'date',
         'time',
         'expected_organizer_number',
-        'status',
-        'duration' ,
-       
-        'people_helped',
-        'goods_distributed',// Assuming you want to track duration for each event
+        'event_status',
+        'image',
+        'location',
+        'duration',
+        'people_helped',       
+        'goods_distributed',   
     ];
 
     /**
@@ -56,4 +57,8 @@ class Event extends Model
         return $this->hasMany(Feedback::class);
     }
 
+    public function eventStatus()
+    {
+        return $this->belongsTo(EventStatus::class, 'event_status', 'id');
+    }
 }

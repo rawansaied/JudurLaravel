@@ -9,11 +9,7 @@ class Auction extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    // الحقول التي يمكن تعبئتها
     protected $fillable = [
         'item_id',
         'start_date',
@@ -23,19 +19,9 @@ class Auction extends Model
         'description',
     ];
 
-    /**
-     * Get the item associated with the auction.
-     */
-    public function item()
+    // العلاقة مع جدول item_donations
+    public function itemDonation()
     {
         return $this->belongsTo(ItemDonation::class, 'item_id');
-    }
-
-    /**
-     * Get the bids associated with the auction.
-     */
-    public function bids()
-    {
-        return $this->hasMany(Bid::class);
     }
 }

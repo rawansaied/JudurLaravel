@@ -37,9 +37,32 @@ class Donor extends Model
     {
         return $this->hasMany(Land::class, 'donor_id');
     }
+<<<<<<< HEAD
     public function latestItemDonation()
     {
         return $this->hasOne(ItemDonation::class, 'donor_id')->latest();
     }
 }
+=======
+>>>>>>> 716e5cda974eca1a96f05c46251691f08e44080c
 
+
+    // Relationship to Financial (Donations)
+    public function donations()
+    {
+        return $this->hasMany(Financial::class, 'donor_id');
+    }
+
+    // Method to get the last donation
+    public function lastDonation()
+    {
+        return $this->hasOne(Financial::class, 'donor_id')->latest();
+    }
+
+    // Method to get the total donations amount
+    public function totalDonations()
+    {
+        return $this->hasMany(Financial::class, 'donor_id')->sum('amount');
+    }
+
+}

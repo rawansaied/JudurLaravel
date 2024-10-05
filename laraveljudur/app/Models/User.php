@@ -2,26 +2,17 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
-
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Donor;
 use App\Models\Volunteer;
 
-
-
 class User extends Authenticatable
 {
-    use HasFactory, HasApiTokens,  Notifiable;
+    use HasFactory, HasApiTokens, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -32,34 +23,24 @@ class User extends Authenticatable
         'profile_picture', 
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    // Relationship to Donor
-    public function donor()
+
+    public function inspections()
     {
-        return $this->hasOne(Donor::class);
+        return $this->hasMany(LandInspection::class, 'examiner_id');
     }
 
-    // Relationship to Volunteer
-    public function volunteer()
+    public function donors()
     {
-        return $this->hasOne(volunteer::class);
+        return $this->hasMany(Donor::class);
     }
+
     public function volunteers()
     {
         return $this->hasMany(Volunteer::class);
@@ -67,20 +48,26 @@ class User extends Authenticatable
 
     public function examiners()
     {
-        return $this->hasMany(Volunteer::class, 'examiner_id');
+        return $this->hasMany(Examiner::class);
     }
-    
-    public function isExaminer()
-{
-    return $this->is_examiner; // Assuming you have an is_examiner column in the users table
-}
-public function inspections()
-{
-    return $this->hasMany(LandInspection::class, 'examiner_id'); // Assuming 'examiner_id' in land_inspections references users
-}
-public function landInspections()
-{
-    return $this->hasMany(LandInspection::class, 'examiner_id');
-}
 
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function examiner()
+    {
+        return $this->hasOne(Examiner::class);
+    }
+
+    public function volunteer()
+    {
+        return $this->hasOne(Volunteer::class);
+    }
+
+    public function landInspections()
+    {
+        return $this->hasMany(LandInspection::class, 'examiner_id');
+    }
 }

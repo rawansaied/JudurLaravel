@@ -16,6 +16,9 @@ class VolunteerFactory extends Factory
             'skills' => $this->faker->text(50),
             'availability' => $this->faker->randomElement(['Weekdays', 'Weekends', 'Anytime']),
             'aim' => $this->faker->sentence(),
+            'volunteer_status' => $this->faker->numberBetween(1, 3),
+            'examiner' => $this->faker->boolean(), 
+
         ];
     }
 }

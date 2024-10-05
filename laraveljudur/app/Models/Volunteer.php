@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +18,7 @@ class Volunteer extends Model
         'availability',
         'volunteer_status',
         'aim',
-        'examiner'
+        'examiner_id', // Assuming examiner_id is a foreign key
     ];
 
     /**
@@ -46,17 +44,19 @@ class Volunteer extends Model
     {
         return $this->belongsToMany(Event::class, 'event_volunteer');
     }
+
     public function lands()
     {
         return $this->hasMany(Land::class);
     }
 
-
-    
- 
+    public function volunteerStatus()
+    {
+        return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
+    }
 
     public function examiner()
     {
-        return $this->belongsTo(User::class, 'examiner_id');
+        return $this->belongsTo(User::class, 'examiner_id'); // Assuming examiner_id references the User model
     }
 }
