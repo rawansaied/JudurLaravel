@@ -72,4 +72,26 @@ class User extends Authenticatable
     {
         return $this->hasMany(Examiner::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    // Relationship with user
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function examiner()
+{
+    return $this->hasOne(Examiner::class);
+}
+
+public function volunteer()
+{
+    return $this->hasOne(Volunteer::class);
+}
+
 }
