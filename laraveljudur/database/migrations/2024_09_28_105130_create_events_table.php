@@ -16,12 +16,15 @@ class CreateEventsTable extends Migration
             $table->date('date');
             $table->time('time');
             $table->integer('expected_organizer_number');
-            $table->string('status');
+            $table->unsignedBigInteger('event_status');
             $table->string('image')->nullable(); 
             $table->string('location')->nullable(); 
             $table->timestamps();
             $table->string('duration')->nullable();
             $table->foreign('land_id')->references('id')->on('lands');
+
+            $table->foreign('event_status')->references('id')->on('event_statuses')->onDelete('cascade');
+
         });
     }
 

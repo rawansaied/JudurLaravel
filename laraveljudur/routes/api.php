@@ -101,5 +101,12 @@ Route::get('/examiner/{id}', [AdminController::class, 'examinerDetails']);
 Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStatus']);
 
 
+Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
+Route::get('/dashboard/events/{id}', [AdminController::class, 'eventDetails']);
+
+Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']); 
+Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']); 
+Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
+Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
 // Dashboard Routes End
