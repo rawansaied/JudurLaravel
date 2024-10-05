@@ -71,42 +71,42 @@ use Illuminate\Http\Request;
 
 class AuctionController extends Controller
 {
-    // عرض جميع العناصر (index)
+    
     public function index()
     {
         $auctions = Auction::all();
-        return response()->json($auctions);  // إرجاع البيانات في شكل JSON للاستخدام في Angular
+        return response()->json($auctions);  
     }
 
 
     
-    // عرض نموذج إنشاء عنصر جديد (create)
+  
     public function create()
     {
-        // يمكن استخدام هذا لعرض صفحة إنشاء المزاد الجديد (للواجهات فقط)
+        
     }
 
-    // تخزين عنصر جديد (store)
+  
     public function store(Request $request)
     {
         $auction = Auction::create($request->all());
-        return response()->json($auction, 201);  // 201 Created status
+        return response()->json($auction, 201);  
     }
 
-    // عرض عنصر محدد (show)
+ 
     public function show($id)
     {
         $auction = Auction::findOrFail($id);
         return response()->json($auction);
     }
 
-    // عرض نموذج تعديل عنصر محدد (edit)
+
     public function edit($id)
     {
-        // يمكن استخدامه لعرض نموذج التعديل (للواجهات فقط)
+       
     }
 
-    // تحديث عنصر محدد (update)
+   
     public function update(Request $request, $id)
     {
         $auction = Auction::findOrFail($id);
@@ -114,11 +114,11 @@ class AuctionController extends Controller
         return response()->json($auction);
     }
 
-    // حذف عنصر محدد (destroy)
+   
     public function destroy($id)
     {
         $auction = Auction::findOrFail($id);
         $auction->delete();
-        return response()->json(null, 204);  // 204 No Content status
+        return response()->json(null, 204); 
     }
 }
