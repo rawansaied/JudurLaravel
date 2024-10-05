@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Donor;
+use App\Models\Event;
 use App\Models\Examiner;
+use App\Models\Land;
 use App\Models\Volunteer;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -103,6 +107,131 @@ public function updateExaminerStatus(Request $request, $id)
     } else {
         return response()->json(['success' => false], 500);
     }
+}
+
+public function getEvents()
+{
+    $events = Event::with('eventStatus')->get();
+
+    return response()->json($events);
+}
+
+public function eventDetails($id)
+{
+    $event = event::with(['eventstatus'])->findOrFail($id);
+
+    return response()->json($event);
+}
+
+public function eventForm()
+{
+    $Land = Land::all();
+
+    return response()->json($Land);
+}
+
+public function createEvent(Request $request)
+{
+    Log::info('Create Event Called', ['request' => $request->all()]);
+
+    $validatedData = $request->validate([
+        'title' => 'required|string|max:255',
+        'land_id' => 'required|integer',
+        'location' => 'required|string|max:255',
+        'date' => 'required|date',
+        'time' => 'required',
+        'expected_organizer_number' => 'required|integer|min:1',
+        'event_status' => 'required|integer|in:1,2,3,4',
+        'description' => 'required|string',
+        'duration' => 'nullable|integer|min:0',
+        'people_helped' => 'nullable|integer|min:0',
+        'goods_distributed' => 'nullable|integer|min:0',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    $event = new Event();
+
+    $event->fill($validatedData);
+
+    if ($request->hasFile('image')) {
+        $event->image = $request->file('image')->store('images', 'public');
+    }
+
+    if ($event->save()) {
+        return response()->json(['message' => 'Event created successfully', 'data' => $event], 201);
+    } else {
+        return response()->json(['message' => 'Failed to create event'], 500);
+    }
+}
+
+
+public function editEvent(Request $request, $id)
+{
+    $validatedData = $request->validate([
+        'title' => 'required|string|max:255',
+        'land_id' => 'required|integer|exists:lands,id',
+        'location' => 'required|string|max:255',
+        'date' => 'required|date',
+        'time' => 'required',
+        'expected_organizer_number' => 'required|integer|min:1',
+        'event_status' => 'required|integer|in:1,2,3,4',
+        'description' => 'required|string',
+        'duration' => 'nullable|integer|min:0',
+        'people_helped' => 'nullable|integer|min:0',
+        'goods_distributed' => 'nullable|min:0',
+        'image' => 'nullable|string', 
+    ]);
+
+    $event = Event::findOrFail($id);
+
+    $event->fill($validatedData);
+
+    if ($request->has('image') && !empty($request->image)) {
+        $imageData = $request->image;
+
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+            $imageType = strtolower($type[1]);
+            
+            if (!in_array($imageType, ['jpg', 'jpeg', 'png', 'gif'])) {
+                return response()->json(['error' => 'Invalid image type'], 422);
+            }
+
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+
+            $imageData = base64_decode($imageData);
+
+            if ($imageData === false) {
+                return response()->json(['error' => 'Base64 decode failed'], 422);
+            }
+
+            $imageName = time() . '.' . $imageType;
+            Storage::disk('public')->put('images/' . $imageName, $imageData);
+
+            $event->image = 'images/' . $imageName;
+        } else {
+            return response()->json(['error' => 'Invalid image format'], 422);
+        }
+    }
+
+    if ($event->save()) {
+        return response()->json(['message' => 'Event updated successfully', 'data' => $event], 200);
+    } else {
+        return response()->json(['message' => 'Failed to update event'], 500);
+    }
+}
+
+
+public function deleteEvent($id)
+{
+    $event = Event::findOrFail($id);
+
+    if ($event->image) {
+        Storage::disk('public')->delete($event->image);
+    }
+
+    $event->delete();
+
+    return response()->json(['message' => 'Event deleted successfully'], 204);
 }
 
 }

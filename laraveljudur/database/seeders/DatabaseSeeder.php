@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RoleSeeder::class);
         $this->call(StatusSeeder::class);
         $this->call(ExaminerStatusesSeeder::class);
+        $this->call(EventStatusesSeeder::class);
         User::factory(5)->create();
 
         ItemDonation::factory(5)->create();

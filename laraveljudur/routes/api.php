@@ -12,6 +12,27 @@ use App\Http\Controllers\DonationController;
 use App\Http\Controllers\DonorController;
 use Illuminate\Support\Facades\Mail;
 
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\LandInspectionController;
+use App\Http\Controllers\PostController;
+
+
+
+Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
+Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
+Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');
+
+
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::apiResource('land-inspections', LandInspectionController::class);
+});
+
+Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
+
+Route::get('/profile/{id}', [UserController::class, 'getProfile']);
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -38,7 +59,7 @@ Route::get('/test', function () {
 });
 
 
-//volunteer 
+//volunteer
 Route::get('/volunteer-summary/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerSummary']);
 Route::get('/volunteer-activity/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerActivityOverTime']);
 Route::get('/volunteer/by-user/{userId}', [VolunteerAnalyticsController::class, 'getVolunteerIdByUserId']);
@@ -56,7 +77,7 @@ Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, '
 Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
 
 // Route to handle the form submission
-Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send'); 
+Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
 
 
 
@@ -114,7 +135,6 @@ Route::get('/pending-examiners', [AdminController::class, 'getPendingExaminers']
 Route::get('/examiner/{id}', [AdminController::class, 'examinerDetails']);
 Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStatus']);
 
-use App\Http\Controllers\UserController;
 
 
     Route::get('/users', [UserController::class, 'index']); 
@@ -125,6 +145,13 @@ use App\Http\Controllers\UserController;
 
 
 
+Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
+Route::get('/dashboard/events/{id}', [AdminController::class, 'eventDetails']);
+
+Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']); 
+Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']); 
+Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
+Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
 // Dashboard Routes End
 
