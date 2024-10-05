@@ -13,11 +13,20 @@ use App\Http\Controllers\DonorController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandInspectionController;
+use App\Http\Controllers\PostController;
+
+
+
+Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
+Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
+Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');
+
+
+
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('land-inspections', LandInspectionController::class);
 });
-
 
 Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
 
