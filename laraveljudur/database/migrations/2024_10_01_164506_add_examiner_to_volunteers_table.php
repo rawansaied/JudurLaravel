@@ -12,7 +12,7 @@ return new class extends Migration
     public function up()
 {
     Schema::table('volunteers', function (Blueprint $table) {
-        $table->boolean('examiner')->default(false); // Add examiner column
+        $table->boolean('examiner')->default(false); 
     });
 }
 

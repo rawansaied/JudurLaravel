@@ -143,31 +143,33 @@ class AuthController extends Controller
 
     // Log in a user
     public function login(Request $request)
-
     {
         Log::info('Login request received', $request->only('email'));
-
-   
-
+    
         $credentials = $request->only('email', 'password');
-
+    
         if (!Auth::attempt($credentials)) {
             Log::warning('Invalid login attempt', ['email' => $request->email]);
             return response()->json(['message' => 'Invalid login details'], 401);
         }
-
+    
         $user = User::where('email', $request->email)->firstOrFail();
         $token = $user->createToken('auth_token')->plainTextToken;
-
+    
         Log::info('User logged in', ['user_id' => $user->id]);
-
+    
+        // Check if the user is a volunteer and add the examiner status
+        $volunteer = Volunteer::where('user_id', $user->id)->first();
+        $user->examiner = $volunteer ? $volunteer->examiner : 0; // Add examiner field to the user
+    
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'message' => 'You are logged in',
-            'user' => $user,
+            'user' => $user, // User now includes 'examiner' field
         ]);
     }
+    
 
     public function logout(Request $request)
     {
@@ -181,4 +183,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Logout failed', 'message' => $e->getMessage()], 500);
         }
     }
+
+
+    
 }

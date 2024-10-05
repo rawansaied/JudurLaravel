@@ -20,6 +20,9 @@ class Volunteer extends Model
         'availability',
         'volunteer_status',
         'aim',
+        'examiner',
+        'examiner_request_made'
+    
     ];
 
     /**
@@ -50,6 +53,15 @@ class Volunteer extends Model
         return $this->hasMany(Land::class);
     }
 
+    public function volunteerStatus()
+    {
+        return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
+    }
 
-    
+    public function requestExaminerStatus()
+    {
+        $this->examiner = false; // Set to false initially
+        $this->volunteer_status = 'pending'; // Change the status to pending
+        $this->save();
+    }
 }
