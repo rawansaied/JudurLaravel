@@ -30,20 +30,17 @@ class VolunteerController extends Controller
 }
 
 
-    // Method for submitting a request to become an examiner
     public function requestExaminer(Request $request)
     {
         Log::info('RequestExaminer invoked', ['user_id' => Auth::id()]);
     
-        // Find the currently logged-in volunteer
+      
         $volunteer = Volunteer::where('user_id', Auth::id())->first();
     
-        // If volunteer doesn't exist, return a 404 response
         if (!$volunteer) {
             return response()->json(['error' => 'Volunteer not found.'], 404);
         }
-    
-        // Validate the incoming request
+
         $request->validate([
             'fullName' => 'required|string|max:255',
             'email' => 'required|email',
@@ -53,19 +50,19 @@ class VolunteerController extends Controller
             'nonProfitAwareness' => 'required|boolean'
         ]);
     
-        // If the volunteer has already made an examiner request, return an error
+       
         if ($volunteer->examiner_request_made) {
             Log::info('Examiner request already made', ['user_id' => Auth::id()]);
             return response()->json(['message' => 'You have already made a request to become an examiner.'], 400);
         }
     
-        // Get the 'pending' status from the volunteer_statuses table
+
         $pendingStatus = VolunteerStatus::where('name', 'pending')->first();
     
         if ($pendingStatus) {
-            // Mark the request as made
+          
             $volunteer->examiner_request_made = true;
-            $volunteer->volunteer_status = $pendingStatus->id;  // Set status to 'pending'
+            $volunteer->volunteer_status = $pendingStatus->id; 
             $volunteer->save();
     
             Log::info('Request submitted successfully', ['volunteer' => $volunteer]);
@@ -73,7 +70,7 @@ class VolunteerController extends Controller
             return response()->json(['message' => 'Your request has been submitted successfully, pending admin approval.'], 200);
         }
     
-        // If pending status is not found, return an error
+      
         return response()->json(['error' => 'Pending status not found.'], 404);
     }
     
