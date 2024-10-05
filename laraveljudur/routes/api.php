@@ -71,6 +71,7 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 
 // Route::apiResource('auctions', AuctionController::class);
 Route::get('/auctions', [AuctionController::class, 'index']);
+Route::get('/auctions/{id}', [AuctionController::class, 'show']);
 
 
 

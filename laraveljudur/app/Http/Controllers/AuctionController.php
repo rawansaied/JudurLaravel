@@ -67,17 +67,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\Auction;
+use App\Models\ItemDonation;
 use Illuminate\Http\Request;
+
 
 class AuctionController extends Controller
 {
-    // عرض جميع العناصر (index)
     public function index()
     {
-        $auctions = Auction::all();
-        return response()->json($auctions);  // إرجاع البيانات في شكل JSON للاستخدام في Angular
+        // Get all item donations with their associated data
+        $itemDonations = ItemDonation::with('donor')->get();
+    
+        // Transform the data to include only the necessary fields
+        $auctions = $itemDonations->map(function ($item) {
+            return [
+                'id' => $item->id, // Assuming there's an ID in item donations
+                'imageUrl' => asset('storage/' . $item->image), // Use asset() to generate the correct URL
+                'title' => $item->item_name, // Assuming item_name corresponds to title
+                'currentPrice' => $item->value, // Assuming value corresponds to current price
+                'description' => $item->condition, // Adjust as necessary
+            ];
+        });
+    
+        return response()->json($auctions);  
     }
-
+    
 
     
     // عرض نموذج إنشاء عنصر جديد (create)
@@ -94,11 +108,50 @@ class AuctionController extends Controller
     }
 
     // عرض عنصر محدد (show)
+    // public function show($id)
+    // {
+    //     $auction = Auction::findOrFail($id);
+    //     return response()->json($auction);
+    // }
     public function show($id)
-    {
-        $auction = Auction::findOrFail($id);
-        return response()->json($auction);
+{
+    // Find the item donation by ID
+    $itemDonation = ItemDonation::with('donor')->find($id);
+    
+    if (!$itemDonation) {
+        return response()->json(['message' => 'Item not found'], 404);
     }
+
+    // Retrieve auction data using the correct column name
+    $auction = Auction::where('item_id', $id)->first();
+    
+    // Transform the data for the response
+    $auctionDetails = [
+        'id' => $itemDonation->id,
+        'imageUrl' => asset('storage/' . $itemDonation->image),
+        'title' => $itemDonation->item_name,
+        'description' => $itemDonation->condition,
+        'currentPrice' => $itemDonation->value,
+        'start_date' => $auction ? $auction->start_date : null,
+        'end_date' => $auction ? $auction->end_date : null,
+        'number_of_bidders' => $auction ? $auction->number_of_bidders : null,
+    ];
+
+    // Return the transformed data
+    return response()->json($auctionDetails);
+}
+
+
+
+
+
+
+
+
+
+
+
+    
 
     // عرض نموذج تعديل عنصر محدد (edit)
     public function edit($id)

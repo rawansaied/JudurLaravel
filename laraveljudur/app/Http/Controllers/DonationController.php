@@ -59,39 +59,49 @@ class DonationController extends Controller
 
     public function donateItem(Request $request)
     {
-    
-
         $validatedData = $request->validate([
             'item_name' => 'required|string',
             'value' => 'required|numeric',
             'is_valuable' => 'required|boolean',
             'condition' => 'required|string',
             'status_id' => 'required|exists:item_statuses,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Optional image validation
         ]);
-
-      
+    
+        // Get the logged-in user ID
         $userId = auth()->id();
-
-       
+    
+        // Retrieve the donor based on the user ID
         $donor = Donor::where('user_id', $userId)->first();
+    
+        // Check if donor exists
         if (!$donor) {
             return response()->json(['error' => 'Donor not found.'], 404);
         }
-
+    
+        // Handle the uploaded image if present
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('item_images', 'public');
+        }
+    
+        // Create the item donation
         $itemDonation = ItemDonation::create([
-            'donor_id' => $donor->id,  
+            'donor_id' => $donor->id, // Use the donor's ID here
             'item_name' => $validatedData['item_name'],
             'value' => $validatedData['value'],
             'is_valuable' => $validatedData['is_valuable'],
             'condition' => $validatedData['condition'],
             'status_id' => $validatedData['status_id'],
+            'image' => $imagePath, // Store the image path
         ]);
-
+    
         return response()->json([
             'message' => 'Item donated successfully',
             'item_donation' => $itemDonation,
         ], 201);
     }
+    
 
     public function donateMoney(Request $request)
     {
