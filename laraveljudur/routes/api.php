@@ -10,11 +10,17 @@ use App\Http\Controllers\VolunteerAnalyticsController;
 use App\Http\Controllers\ContactUsController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\DonorController;
+use Illuminate\Support\Facades\Mail;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandInspectionController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\LandController;
+Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
+Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
+Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
 use App\Http\Controllers\PaymentController;
 
 // Your routes/api.php
@@ -52,6 +58,18 @@ Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->na
 
 
 
+// Route::middleware(['auth:sanctum'])->group(function () {
+//     Route::apiResource('land-inspections', LandInspectionController::class);
+// });
+
+
+
+Route::delete('/examiner-reports/{id}', [LandInspectionController::class, 'destroy']);
+Route::get('/examiner-reports', [LandInspectionController::class, 'index']);
+Route::get('/examiner-reports/report-details/{id}', [LandInspectionController::class, 'show']);
+Route::apiResource('land-inspections', LandInspectionController::class);
+Route::apiResource('lands', LandController::class);
+Route::apiResource('posts', PostController::class);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('land-inspections', LandInspectionController::class);
 });
@@ -63,7 +81,7 @@ Route::get('/profile/{id}', [UserController::class, 'getProfile']);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-use App\Http\Controllers\EventController;
+
 
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{id}', [EventController::class, 'show']);
@@ -86,13 +104,17 @@ Route::get('/test', function () {
 });
 
 
-//volunteer
 Route::get('/volunteer-summary/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerSummary']);
 Route::get('/volunteer-activity/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerActivityOverTime']);
 Route::get('/volunteer/by-user/{userId}', [VolunteerAnalyticsController::class, 'getVolunteerIdByUserId']);
 Route::get('/volunteer-events/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerEvents']);
 Route::get('/examiner-lands/{volunteerId}', [VolunteerAnalyticsController::class, 'getExaminerLandData']);
-Route::get('/land-inspections/{volunteerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
+Route::get('/land-inspections/{examinerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
+
+Route::get('/pending-lands', [VolunteerAnalyticsController::class, 'getPendingLands']);
+Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
+
+
 
 
 
@@ -137,6 +159,13 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
+Route::get('/send-test-email', function () {
+    Mail::raw('This is a test email from Judur!', function ($message) {
+        $message->to('your-email@example.com')
+                ->subject('Test Email');
+    });
+    return 'Test email sent!';
+});
 // Dashboard Routes Start
 
 Route::get('/donors', [AdminController::class, 'getDonors']);
@@ -150,6 +179,15 @@ Route::put('/volunteer/{id}/status', [AdminController::class, 'updateStatus']);
 Route::get('/pending-examiners', [AdminController::class, 'getPendingExaminers']);
 Route::get('/examiner/{id}', [AdminController::class, 'examinerDetails']);
 Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStatus']);
+
+
+
+    Route::get('/users', [UserController::class, 'index']); 
+    Route::post('/users', [UserController::class, 'store']); 
+    Route::get('/users/{id}', [UserController::class,'show']); 
+    Route::put('/users/{id}', [UserController::class, 'update']); 
+    Route::delete('/users/{id}', [UserController::class, 'destroy']); 
+
 
 
 Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
@@ -171,6 +209,8 @@ Route::delete('/dashboard/auctions/{id}', [AdminController::class, 'deleteAuctio
 
 
 
+Route::post('/donate', [DonationController::class, 'donate']);
+Route::post('/create-payment', [DonationController::class, 'createPayment']);
 Route::post('/login', [AuthController::class, 'login']);
 
 
@@ -181,7 +221,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);

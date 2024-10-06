@@ -33,7 +33,7 @@ class Event extends Model
      */
     public function land()
     {
-        return $this->belongsTo(Land::class);
+        return $this->belongsTo(Land::class, 'land_id');
     }
 
     /**
