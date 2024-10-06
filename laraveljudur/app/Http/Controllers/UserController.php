@@ -6,14 +6,10 @@ use App\Models\User;
 use App\Models\Volunteer;
 use App\Models\Donor;
 use App\Models\Role;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\Hash;
-=======
 use Illuminate\Support\Facades\Log;
->>>>>>> eafef8dc5f979655c79b656cbf15be1d3f6a345c
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
@@ -44,11 +40,7 @@ class UserController extends Controller
 
     public function updateProfile(Request $request, $id)
     {
-<<<<<<< HEAD
-        Log::info('Update Profile Request', $request->all()); 
-=======
         Log::info('Update Profile Request', $request->all()); // Log request data
->>>>>>> eafef8dc5f979655c79b656cbf15be1d3f6a345c
         try {
             $user = User::findOrFail($id);
             Log::info('User found', ['user' => $user]);
