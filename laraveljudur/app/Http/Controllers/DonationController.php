@@ -80,37 +80,37 @@ class DonationController extends Controller
             'value' => 'required|numeric',
             'is_valuable' => 'required|boolean',
             'condition' => 'required|string',
+            'status_id' => 'required|exists:item_statuses,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Optional image validation
         ]);
     
         // Get the logged-in user ID
         $userId = auth()->id();
     
+        // Retrieve the donor based on the user ID
         // Find the donor associated with the logged-in user
         $donor = Donor::where('user_id', $userId)->first();
+    
+        // Check if donor exists
         if (!$donor) {
             return response()->json(['error' => 'Donor not found.'], 404);
         }
     
-        // Get the 'pending' status ID
-        $pendingStatusId = DB::table('item_statuses')->where('status', 'pending')->value('id');
-        // Get the 'accepted' status ID (for non-valuable items, you can adjust this)
-        $acceptedStatusId = DB::table('item_statuses')->where('status', 'accepted')->value('id');
-    
-        if (!$pendingStatusId || !$acceptedStatusId) {
-            return response()->json(['error' => 'Status not found.'], 500);
+        // Handle the uploaded image if present
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('item_images', 'public');
         }
     
-        // Determine the status based on whether the item is valuable
-        $statusId = $validatedData['is_valuable'] ? $pendingStatusId : $acceptedStatusId;
-    
-        // Create the item donation with the determined status
+        // Create the item donation
         $itemDonation = ItemDonation::create([
-            'donor_id' => $donor->id,
+            'donor_id' => $donor->id, // Use the donor's ID here
             'item_name' => $validatedData['item_name'],
             'value' => $validatedData['value'],
             'is_valuable' => $validatedData['is_valuable'],
             'condition' => $validatedData['condition'],
-            'status_id' => $statusId,  // Set to 'pending' if valuable, otherwise 'accepted'
+            'status_id' => $validatedData['status_id'],
+            'image' => $imagePath, // Store the image path
         ]);
     
         return response()->json([
