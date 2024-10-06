@@ -15,25 +15,15 @@ class ItemDonation extends Model
         'value', 
         'is_valuable', 
         'condition', 
-        'status_id'
-    ];
+        'status_id',
+        'image', ];
 
+        public function auction()
+        {
+            return $this->hasOne(Auction::class, 'item_donation_id', 'id'); // Adjust the foreign key and local key as necessary
+        }
 
-
-
-
-    public function auctions()
-    {
-        return $this->hasMany(Auction::class, 'item_id');
-    }
-
-
-
-
-
-
-
-
+    // Relationship to donor
     public function donor()
     {
         return $this->belongsTo(Donor::class);
