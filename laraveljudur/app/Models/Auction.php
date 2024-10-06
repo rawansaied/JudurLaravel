@@ -14,6 +14,8 @@ class Auction extends Model
         'start_date',
         'end_date',
         'starting_price',
+        'current_highest_bid',
+        'highest_bidder_id',
         'title',
         'description',
         'auction_status_id',
@@ -21,11 +23,11 @@ class Auction extends Model
 
     public function itemDonation()
     {
-        return $this->belongsTo(ItemDonation::class, 'item_id');
+        return $this->belongsTo(ItemDonation::class, 'item_id'); // Ensure this matches your database
     }
 
-    public function auctionStatus()
+    public function highestBidder()
     {
-        return $this->belongsTo(AuctionStatus::class, 'auction_status_id');
+        return $this->belongsTo(User::class, 'highest_bidder_id');
     }
 }

@@ -10,20 +10,20 @@ class ItemDonation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'donor_id', 
-        'item_name', 
-        'value', 
-        'is_valuable', 
-        'condition', 
+        'donor_id',
+        'item_name',
+        'value',
+        'is_valuable',
+        'condition',
         'status_id',
-        'image', ];
+        'image', 
+    ];
 
-        public function auction()
-        {
-            return $this->hasOne(Auction::class, 'item_donation_id', 'id'); // Adjust the foreign key and local key as necessary
-        }
+    public function auction()
+    {
+        return $this->hasOne(Auction::class, 'item_id', 'id'); 
+    }
 
-    // Relationship to donor
     public function donor()
     {
         return $this->belongsTo(Donor::class);

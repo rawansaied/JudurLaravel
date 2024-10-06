@@ -96,19 +96,33 @@ class DonationController extends Controller
             // Handle the uploaded image
             $imagePath = $request->file('image')->store('item_images', 'public'); // Save the image
     
-            // Set the status ID to 'pending' if the item is valuable, otherwise 'new'
-            $statusId = $validatedData['is_valuable'] ? 
-                \App\Models\ItemStatus::where('status', 'pending')->first()->id : 
-                \App\Models\ItemStatus::where('status', 'new')->first()->id;
+            // Set the status ID based on is_valuable value
+            if ($validatedData['is_valuable']) {
+                // If valuable, set status to 'pending'
+                $status = \App\Models\ItemStatus::where('status', 'pending')->first();
+                if (!$status) {
+                    return response()->json(['error' => 'Status "pending" not found.'], 404);
+                }
+                $statusId = $status->id;
+                $value = $validatedData['value']; // Get value from request if valuable
+            } else {
+                // If not valuable, set status to 'normal'
+                $status = \App\Models\ItemStatus::where('status', 'normal')->first();
+                if (!$status) {
+                    return response()->json(['error' => 'Status "normal" not found.'], 404);
+                }
+                $statusId = $status->id; // Use the ID of the normal status
+                $value = 0.00; // Set value to 0 if not valuable
+            }
     
             // Create the item donation
             $itemDonation = ItemDonation::create([
                 'donor_id' => $donor->id,
                 'item_name' => $validatedData['item_name'],
-                'value' => $validatedData['is_valuable'] ? $validatedData['value'] : 0.00, // Set value if item is valuable
+                'value' => $value, // Set value based on is_valuable
                 'is_valuable' => $validatedData['is_valuable'],
                 'condition' => $validatedData['condition'],
-                'status_id' => $statusId, // Set status
+                'status_id' => $statusId, // Set status to normal if not valuable
                 'image' => $imagePath, // Store the image path
             ]);
     
@@ -120,8 +134,15 @@ class DonationController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Return validation errors to the frontend
             return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            // Handle other exceptions
+            return response()->json(['error' => 'Error donating item: ' . $e->getMessage()], 500);
         }
     }
+    
+    
+    
+    
     
     
     
