@@ -11,6 +11,7 @@ class CreateAuctionsTable extends Migration
         Schema::create('auctions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('item_id');
+            $table->unsignedBigInteger('auction_status_id')->default(1);
             $table->date('start_date');
             $table->date('end_date');
             $table->decimal('starting_price', 8, 2);
@@ -19,6 +20,7 @@ class CreateAuctionsTable extends Migration
             $table->timestamps();
 
             $table->foreign('item_id')->references('id')->on('item_donations');
+            $table->foreign('auction_status_id')->references('id')->on('auction_statuses');
         });
     }
 

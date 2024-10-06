@@ -16,7 +16,35 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandInspectionController;
 use App\Http\Controllers\PostController;
 
+use App\Http\Controllers\PaymentController;
 
+// Your routes/api.php
+//////////working 
+use App\Http\Controllers\VolunteerController;
+
+Route::middleware('auth:sanctum')->resource('volunteers', VolunteerController::class);
+Route::middleware('auth:sanctum')->post('/volunteer/request-examiner', [VolunteerController::class, 'requestExaminer']);
+Route::middleware('auth:sanctum')->get('/volunteer/check-examiner-request', [VolunteerController::class, 'checkExaminerRequest']);
+
+ 
+    // Create a payment and redirect to PayPal for approval
+   
+
+
+    // Route::middleware('auth:sanctum')->group(function () {
+    //     Route::post('/initiate-payment', [PaymentController::class, 'initiatePayment']);
+    // });
+    
+    
+
+////////////////////////
+
+
+Route::middleware('auth:sanctum')->post('/land-inspection', [LandInspectionController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/lands', [LandInspectionController::class, 'getLands']);
+///////////////////////
+
+ Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
 
 Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
@@ -47,7 +75,7 @@ Route::post('/register/donor', [AuthController::class, 'registerDonor']);
 Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 // Login a user
 
-Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/login', [AuthController::class, 'login']);
 
 
 
@@ -153,13 +181,91 @@ Route::post('/dashboard/events/create', [AdminController::class, 'createEvent'])
 Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
 Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
+Route::get('/dashboard/auctions', [AdminController::class, 'getAuctions']);
+Route::get('/dashboard/auctions/{id}', [AdminController::class, 'auctionDetails']);
+Route::post('/dashboard/auctions', [AdminController::class, 'createAuction']);
+Route::get('/dashboard/statuses/auctions', [AdminController::class, 'getAuctionStatuses']);
+Route::get('/dashboard/items/auctions', [AdminController::class, 'getAuctionItems']);
+Route::put('/dashboard/auctions/{id}', [AdminController::class, 'editAuction']);
+Route::delete('/dashboard/auctions/{id}', [AdminController::class, 'deleteAuction']);
 // Dashboard Routes End
 
 
 
+<<<<<<< HEAD
 Route::post('/donate', [DonationController::class, 'donate']);
 Route::post('/create-payment', [DonationController::class, 'createPayment']);
+=======
+Route::post('/login', [AuthController::class, 'login']);
+>>>>>>> eafef8dc5f979655c79b656cbf15be1d3f6a345c
 
 
 
 
+<<<<<<< HEAD
+=======
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+
+Route::post('/forgot-password', function (Request $request) {
+    $request->validate(['email' => 'required|email']);
+
+    $token = Str::random(60);
+    
+    // Insert the token manually for testing
+    DB::table('password_reset_tokens')->insert([
+        'email' => $request->email,
+        'token' => $token,
+        'created_at' => now(),
+    ]);
+
+    // Generate the reset link
+    $resetLink = "http://localhost:4200/reset-password?token={$token}&email={$request->email}";
+
+    // Send the reset link email using Mail::to() directly
+    Mail::raw("Click here to reset your password: {$resetLink}", function ($message) use ($request) {
+        $message->to($request->email)
+            ->subject('Password Reset');
+    });
+
+    return response()->json(['message' => 'Reset link sent to your email.'], 200);
+});
+
+Route::post('/reset-password', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+        'token' => 'required',
+        'password' => 'required|confirmed|min:8',
+    ]);
+
+    // Check if the reset token exists
+    $passwordReset = DB::table('password_reset_tokens')->where([
+        ['email', $request->email],
+        ['token', $request->token],
+    ])->first();
+
+    if (!$passwordReset) {
+        return response()->json(['message' => 'Invalid token or email.'], 400);
+    }
+
+    // Update the user's password
+    $user = DB::table('users')->where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['message' => 'User not found.'], 404);
+    }
+
+    DB::table('users')->where('email', $request->email)->update([
+        'password' => Hash::make($request->password),
+        'remember_token' => Str::random(60),
+    ]);
+
+    // Delete the token after password reset
+    DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+    return response()->json(['message' => 'Password reset successful.'], 200);
+});
+>>>>>>> eafef8dc5f979655c79b656cbf15be1d3f6a345c
