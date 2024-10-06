@@ -70,4 +70,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(LandInspection::class, 'examiner_id');
     }
+    public function events()
+{
+    return $this->belongsToMany(Event::class, 'event_volunteer', 'volunteer_id', 'event_id');
+}
+
+
+public function volunteerProfile()
+{
+    return $this->hasOne(Volunteer::class);
+}
 }

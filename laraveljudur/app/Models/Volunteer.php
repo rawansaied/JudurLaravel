@@ -55,6 +55,8 @@ class Volunteer extends Model
         return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
     }
 
+
+
     public function examiner()
     {
         return $this->belongsTo(User::class, 'examiner_id'); // Assuming examiner_id references the User model
