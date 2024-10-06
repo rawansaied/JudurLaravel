@@ -28,4 +28,11 @@ class Examiner extends Model
     {
         return $this->belongsTo(ExaminerStatus::class, 'examiner_status');
     }
+
+
+public function status()
+{
+    return $this->belongsTo(ExaminerStatus::class, 'examiner_status');
+}
+
 }

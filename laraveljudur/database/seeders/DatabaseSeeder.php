@@ -20,9 +20,18 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+        // Seed roles
+
+    $this->call(PostSeeder::class);
+
         $this->call(RoleSeeder::class);
         $this->call(StatusSeeder::class);
         $this->call(ExaminerStatusesSeeder::class);
+        $this->call(EventStatusesSeeder::class);
+        $this->call(AuctionStatusSeeder::class);
+
+
+
         User::factory(5)->create();
 
         ItemDonation::factory(5)->create();

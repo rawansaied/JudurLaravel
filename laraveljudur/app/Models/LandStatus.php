@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class LandStatus extends Model
 {
     use HasFactory;
+    protected $table = 'land_statuses';
 
     /**
      * The attributes that are mass assignable.

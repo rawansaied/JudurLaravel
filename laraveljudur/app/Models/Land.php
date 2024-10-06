@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
 class Land extends Model
 {
     use HasFactory;
@@ -22,6 +23,10 @@ class Land extends Model
     {
         return $this->belongsToMany(Volunteer::class, 'examiner_Land');
     }
+    public function status()
+    {
+        return $this->belongsTo(LandStatus::class, 'status_id');
+    }
     public function volunteer()
     {
         return $this->belongsTo(Volunteer::class);
@@ -33,6 +38,10 @@ class Land extends Model
     }
     public function donor()
     {
-        return $this->belongsTo(Donor::class);
+        return $this->belongsTo(Donor::class, 'donor_id');
+    }
+    public function events() 
+    {
+        return $this->hasMany(Event::class, 'land_id'); 
     }
 }

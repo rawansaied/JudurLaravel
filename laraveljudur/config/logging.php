@@ -126,6 +126,13 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+'paypal' => [
+    'driver' => 'daily',
+    'path' => storage_path('logs/paypal.log'),
+    'level' => 'debug',
+    'bubble' => true,
+],
+
 
     ],
 

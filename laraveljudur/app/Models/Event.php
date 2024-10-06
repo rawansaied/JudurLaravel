@@ -20,7 +20,7 @@ class Event extends Model
         'date',
         'time',
         'expected_organizer_number',
-        'status',
+        'event_status',
         'image',
         'location',
         'duration',
@@ -33,7 +33,7 @@ class Event extends Model
      */
     public function land()
     {
-        return $this->belongsTo(Land::class);
+        return $this->belongsTo(Land::class, 'land_id');
     }
 
     /**
@@ -57,4 +57,8 @@ class Event extends Model
         return $this->hasMany(Feedback::class);
     }
 
+    public function eventStatus()
+    {
+        return $this->belongsTo(EventStatus::class, 'event_status', 'id');
+    }
 }
