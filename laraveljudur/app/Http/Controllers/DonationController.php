@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -71,53 +70,82 @@ class DonationController extends Controller
 
     
     
-
     public function donateItem(Request $request)
     {
-        // Validate input data, excluding status_id as it will be set based on is_valuable
-        $validatedData = $request->validate([
-            'item_name' => 'required|string',
-            'value' => 'required|numeric',
-            'is_valuable' => 'required|boolean',
-            'condition' => 'required|string',
-            'status_id' => 'required|exists:item_statuses,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Optional image validation
-        ]);
+        try {
+            // Validate the input data
+            $validatedData = $request->validate([
+                'item_name' => 'required|string',
+                'condition' => 'required|string', // Condition is required
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Image is required
+                'is_valuable' => 'required|boolean',
+                'value' => $request->is_valuable ? 'required|numeric' : 'nullable|numeric' // Value is required if item is valuable
+            ]);
     
-        // Get the logged-in user ID
-        $userId = auth()->id();
+            // Get the logged-in user ID
+            $userId = auth()->id();
     
-        // Retrieve the donor based on the user ID
-        // Find the donor associated with the logged-in user
-        $donor = Donor::where('user_id', $userId)->first();
+            // Retrieve the donor based on the user ID
+            $donor = Donor::where('user_id', $userId)->first();
     
-        // Check if donor exists
-        if (!$donor) {
-            return response()->json(['error' => 'Donor not found.'], 404);
+            // Check if donor exists
+            if (!$donor) {
+                return response()->json(['error' => 'Donor not found.'], 404);
+            }
+    
+            // Handle the uploaded image
+            $imagePath = $request->file('image')->store('item_images', 'public'); // Save the image
+    
+            // Set the status ID based on is_valuable value
+            if ($validatedData['is_valuable']) {
+                // If valuable, set status to 'pending'
+                $status = \App\Models\ItemStatus::where('status', 'pending')->first();
+                if (!$status) {
+                    return response()->json(['error' => 'Status "pending" not found.'], 404);
+                }
+                $statusId = $status->id;
+                $value = $validatedData['value']; // Get value from request if valuable
+            } else {
+                // If not valuable, set status to 'normal'
+                $status = \App\Models\ItemStatus::where('status', 'normal')->first();
+                if (!$status) {
+                    return response()->json(['error' => 'Status "normal" not found.'], 404);
+                }
+                $statusId = $status->id; // Use the ID of the normal status
+                $value = 0.00; // Set value to 0 if not valuable
+            }
+    
+            // Create the item donation
+            $itemDonation = ItemDonation::create([
+                'donor_id' => $donor->id,
+                'item_name' => $validatedData['item_name'],
+                'value' => $value, // Set value based on is_valuable
+                'is_valuable' => $validatedData['is_valuable'],
+                'condition' => $validatedData['condition'],
+                'status_id' => $statusId, // Set status to normal if not valuable
+                'image' => $imagePath, // Store the image path
+            ]);
+    
+            return response()->json([
+                'message' => 'Item donated successfully',
+                'item_donation' => $itemDonation,
+            ], 201);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Return validation errors to the frontend
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            // Handle other exceptions
+            return response()->json(['error' => 'Error donating item: ' . $e->getMessage()], 500);
         }
-    
-        // Handle the uploaded image if present
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('item_images', 'public');
-        }
-    
-        // Create the item donation
-        $itemDonation = ItemDonation::create([
-            'donor_id' => $donor->id, // Use the donor's ID here
-            'item_name' => $validatedData['item_name'],
-            'value' => $validatedData['value'],
-            'is_valuable' => $validatedData['is_valuable'],
-            'condition' => $validatedData['condition'],
-            'status_id' => $validatedData['status_id'],
-            'image' => $imagePath, // Store the image path
-        ]);
-    
-        return response()->json([
-            'message' => 'Item donated successfully',
-            'item_donation' => $itemDonation,
-        ], 201);
     }
+    
+    
+    
+    
+    
+    
+    
     
 
     public function donateMoney(Request $request)

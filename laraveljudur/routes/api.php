@@ -17,6 +17,7 @@ use App\Http\Controllers\LandInspectionController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandController;
+use App\Http\Controllers\BidController;
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
@@ -134,10 +135,15 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 
 
 // Route::apiResource('auctions', AuctionController::class);
-Route::get('/auctions', [AuctionController::class, 'index']);
-Route::get('/auctions/{id}', [AuctionController::class, 'show']);
+Route::get('/auctions', [AuctionController::class, 'index']); // View all available auctions
+Route::get('/auctions/{id}', [AuctionController::class, 'show']); // View a single auction by ID
 
-
+// Protected routes (requires authentication using Sanctum)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/auctions/{id}/bid', [BidController::class, 'store']); // Place a bid on an auction
+    Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
+});
+Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
 
 ////
 
