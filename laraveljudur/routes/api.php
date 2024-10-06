@@ -192,24 +192,18 @@ Route::delete('/dashboard/auctions/{id}', [AdminController::class, 'deleteAuctio
 
 
 
-<<<<<<< HEAD
 Route::post('/donate', [DonationController::class, 'donate']);
 Route::post('/create-payment', [DonationController::class, 'createPayment']);
-=======
 Route::post('/login', [AuthController::class, 'login']);
->>>>>>> eafef8dc5f979655c79b656cbf15be1d3f6a345c
 
 
 
 
-<<<<<<< HEAD
-=======
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
@@ -268,4 +262,3 @@ Route::post('/reset-password', function (Request $request) {
 
     return response()->json(['message' => 'Password reset successful.'], 200);
 });
->>>>>>> eafef8dc5f979655c79b656cbf15be1d3f6a345c
