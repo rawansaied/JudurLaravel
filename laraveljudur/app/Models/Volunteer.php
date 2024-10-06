@@ -19,6 +19,9 @@ class Volunteer extends Model
         'volunteer_status',
         'aim',
         'examiner_id', // Assuming examiner_id is a foreign key
+        'examiner',
+        'examiner_request_made'
+    
     ];
 
     /**
@@ -57,6 +60,11 @@ class Volunteer extends Model
 
 
 
+    public function requestExaminerStatus()
+    {
+        $this->examiner = false; // Set to false initially
+        $this->volunteer_status = 'pending'; // Change the status to pending
+        $this->save();}
     public function examiner()
     {
         return $this->belongsTo(User::class, 'examiner_id'); // Assuming examiner_id references the User model

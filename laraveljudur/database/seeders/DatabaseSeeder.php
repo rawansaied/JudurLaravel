@@ -28,6 +28,10 @@ class DatabaseSeeder extends Seeder
         $this->call(StatusSeeder::class);
         $this->call(ExaminerStatusesSeeder::class);
         $this->call(EventStatusesSeeder::class);
+        $this->call(AuctionStatusSeeder::class);
+
+
+
         User::factory(5)->create();
 
         ItemDonation::factory(5)->create();

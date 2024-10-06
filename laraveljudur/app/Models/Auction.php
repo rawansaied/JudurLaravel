@@ -9,7 +9,6 @@ class Auction extends Model
 {
     use HasFactory;
 
-    // الحقول التي يمكن تعبئتها
     protected $fillable = [
         'item_id',
         'start_date',
@@ -17,11 +16,16 @@ class Auction extends Model
         'starting_price',
         'title',
         'description',
+        'auction_status_id',
     ];
 
-    // العلاقة مع جدول item_donations
     public function itemDonation()
     {
         return $this->belongsTo(ItemDonation::class, 'item_id');
+    }
+
+    public function auctionStatus()
+    {
+        return $this->belongsTo(AuctionStatus::class, 'auction_status_id');
     }
 }
