@@ -40,7 +40,7 @@ class UserController extends Controller
 
     public function updateProfile(Request $request, $id)
     {
-        Log::info('Update Profile Request', $request->all()); // Log request data
+        Log::info('Update Profile Request', $request->all()); 
         try {
             $user = User::findOrFail($id);
             Log::info('User found', ['user' => $user]);
@@ -76,7 +76,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::whereIn('role_id', [6, 7])
+        $users = User::whereIn('role_id', [5, 6])
             ->with('role')
             ->get()
             ->map(function ($user) {

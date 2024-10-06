@@ -58,5 +58,9 @@ class Donor extends Model
     {
         return $this->hasMany(Financial::class, 'donor_id')->sum('amount');
     }
+    public function lands()
+    {
+        return $this->hasMany(Land::class, 'donor_id'); 
+    }
 
 }

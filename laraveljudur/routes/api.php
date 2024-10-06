@@ -25,9 +25,9 @@ Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->na
 
 
 
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::apiResource('land-inspections', LandInspectionController::class);
-});
+// Route::middleware(['auth:sanctum'])->group(function () {
+//     Route::apiResource('land-inspections', LandInspectionController::class);
+// });
 
 Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
 
@@ -59,13 +59,13 @@ Route::get('/test', function () {
 });
 
 
-//volunteer
 Route::get('/volunteer-summary/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerSummary']);
 Route::get('/volunteer-activity/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerActivityOverTime']);
 Route::get('/volunteer/by-user/{userId}', [VolunteerAnalyticsController::class, 'getVolunteerIdByUserId']);
 Route::get('/volunteer-events/{volunteerId}', [VolunteerAnalyticsController::class, 'getVolunteerEvents']);
 Route::get('/examiner-lands/{volunteerId}', [VolunteerAnalyticsController::class, 'getExaminerLandData']);
-Route::get('/land-inspections/{volunteerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
+Route::get('/land-inspections/{examinerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
+
 Route::get('/pending-lands', [VolunteerAnalyticsController::class, 'getPendingLands']);
 Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
 

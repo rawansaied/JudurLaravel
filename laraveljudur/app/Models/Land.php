@@ -37,6 +37,10 @@ class Land extends Model
     }
     public function donor()
     {
-        return $this->belongsTo(Donor::class);
+        return $this->belongsTo(Donor::class, 'donor_id');
+    }
+    public function events() 
+    {
+        return $this->hasMany(Event::class, 'land_id'); 
     }
 }

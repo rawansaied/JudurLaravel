@@ -60,4 +60,10 @@ class Volunteer extends Model
     {
         return $this->hasOne(Examiner::class);
     }
+    public function landinspection()
+    {
+        return $this->hasMany(LandInspection::class);
+    }
+
+
 }

@@ -22,7 +22,11 @@ class LandInspection extends Model
 
     public function land()
     {
-        return $this->belongsTo(Land::class);
+        return $this->belongsTo(Land::class,'land_id');
+    }
+    public function volunteer()
+    {
+        return $this->belongsTo(User::class, 'volunteer_id');
     }
 
     public function examiner()
