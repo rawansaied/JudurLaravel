@@ -15,7 +15,12 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandInspectionController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\LandController;
+Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
+Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
+Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
 use App\Http\Controllers\PaymentController;
 
 // Your routes/api.php
@@ -57,6 +62,18 @@ Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->na
 //     Route::apiResource('land-inspections', LandInspectionController::class);
 // });
 
+
+
+Route::delete('/examiner-reports/{id}', [LandInspectionController::class, 'destroy']);
+Route::get('/examiner-reports', [LandInspectionController::class, 'index']);
+Route::get('/examiner-reports/report-details/{id}', [LandInspectionController::class, 'show']);
+Route::apiResource('land-inspections', LandInspectionController::class);
+Route::apiResource('lands', LandController::class);
+Route::apiResource('posts', PostController::class);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::apiResource('land-inspections', LandInspectionController::class);
+});
+
 Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
 
 Route::get('/profile/{id}', [UserController::class, 'getProfile']);
@@ -64,7 +81,7 @@ Route::get('/profile/{id}', [UserController::class, 'getProfile']);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-use App\Http\Controllers\EventController;
+
 
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{id}', [EventController::class, 'show']);

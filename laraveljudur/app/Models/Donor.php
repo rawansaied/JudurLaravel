@@ -39,6 +39,11 @@ class Donor extends Model
     {
         return $this->hasMany(Land::class, 'donor_id');
     }
+    public function latestItemDonation()
+    {
+        return $this->hasOne(ItemDonation::class, 'donor_id')->latest();
+    }
+
 
 
     // Relationship to Financial (Donations)

@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +18,7 @@ class Volunteer extends Model
         'availability',
         'volunteer_status',
         'aim',
+        'examiner_id', // Assuming examiner_id is a foreign key
         'examiner',
         'examiner_request_made'
     
@@ -48,6 +47,7 @@ class Volunteer extends Model
     {
         return $this->belongsToMany(Event::class, 'event_volunteer');
     }
+
     public function lands()
     {
         return $this->hasMany(Land::class);
@@ -58,6 +58,8 @@ class Volunteer extends Model
         return $this->belongsTo(VolunteerStatus::class, 'volunteer_status', 'id');
     }
 
+
+
     public function requestExaminerStatus()
     {
         $this->examiner = false; // Set to false initially
@@ -65,7 +67,7 @@ class Volunteer extends Model
         $this->save();}
     public function examiner()
     {
-        return $this->hasOne(Examiner::class);
+        return $this->belongsTo(User::class, 'examiner_id'); // Assuming examiner_id references the User model
     }
     public function landinspection()
     {

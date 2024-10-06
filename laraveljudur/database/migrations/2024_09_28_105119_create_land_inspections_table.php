@@ -18,6 +18,9 @@ class CreateLandInspectionsTable extends Migration
             $table->boolean('electricity_supply');
             $table->string('general_condition');
             $table->string('photo_path')->nullable(); 
+          
+            $table->text('summary')->nullable(); // New column for summary
+            $table->json('suggestions')->nullable();
             $table->timestamps();
 
             $table->foreign('land_id')->references('id')->on('lands');
