@@ -18,6 +18,9 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandController;
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
+
+Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
+
 Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
 Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');

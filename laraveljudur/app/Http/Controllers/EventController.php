@@ -65,6 +65,14 @@ class EventController extends Controller
                 return response()->json(['message' => 'You are already registered for this event'], 400);
             }
         }
+        $isAlreadyJoined = DB::table('event_volunteer')
+        ->where('volunteer_id', $user->id)
+        ->where('event_id', $eventId)
+        ->exists();
+
+    if ($isAlreadyJoined) {
+        return response()->json(['message' => 'You are already registered for this event'], 400);
+    }
 
         return response()->json(['message' => 'You must be a volunteer to join an event'], 403);
     }
@@ -115,6 +123,21 @@ class EventController extends Controller
             ->where('event_id', $eventId)
             ->exists();
     }
-    
+   
+public function isVolunteerJoined(Request $request, $eventId)
+{
+    $user = auth()->user();
+
+    if (!$user) {
+        return response()->json(['message' => 'User not authenticated'], 401);  // Handle unauthenticated users
+    }
+
+    $isParticipating = DB::table('event_volunteer')
+        ->where('volunteer_id', $user->id)
+        ->where('event_id', $eventId)
+        ->exists();
+
+    return response()->json(['isJoined' => $isParticipating], 200);
+}
     
 }
