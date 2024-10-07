@@ -50,8 +50,8 @@ Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
 Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');
 
 
-
-
+Route::post('/create-payment', [DonationController::class, 'createPayment']);
+Route::post('/donate', [DonationController::class, 'donate']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('land-inspections', LandInspectionController::class);
 });
