@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Cashier\Billable;
+
 
 class Donor extends Model
 {
-    use HasFactory;
+    use HasFactory, Billable;
 
     protected $fillable = [
         'user_id',
@@ -37,6 +39,11 @@ class Donor extends Model
     {
         return $this->hasMany(Land::class, 'donor_id');
     }
+    public function latestItemDonation()
+    {
+        return $this->hasOne(ItemDonation::class, 'donor_id')->latest();
+    }
+
 
 
     // Relationship to Financial (Donations)
@@ -55,6 +62,10 @@ class Donor extends Model
     public function totalDonations()
     {
         return $this->hasMany(Financial::class, 'donor_id')->sum('amount');
+    }
+    public function lands()
+    {
+        return $this->hasMany(Land::class, 'donor_id'); 
     }
 
 }

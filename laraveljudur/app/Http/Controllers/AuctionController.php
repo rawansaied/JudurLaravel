@@ -67,24 +67,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Auction;
+use App\Models\Bid;
+
+use App\Models\ItemDonation;
 use Illuminate\Http\Request;
 
+
 class AuctionController extends Controller
-{
+{public function index() {
+    $auctions = Auction::with('itemDonation')
+                ->where('auction_status_id', 2) // 2 represents 'Ongoing'
+                ->where('end_date', '>', now()) // Only fetch auctions that haven't ended yet
+                ->get();
     
-    public function index()
-    {
-        $auctions = Auction::all();
-        return response()->json($auctions);  
-    }
-
+    return response()->json($auctions);
+}
 
     
-  
-    public function create()
-    {
-        
-    }
+    
 
   
     public function store(Request $request)
@@ -94,12 +94,38 @@ class AuctionController extends Controller
     }
 
  
-    public function show($id)
-    {
-        $auction = Auction::findOrFail($id);
-        return response()->json($auction);
+    public function show($id) {
+        $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
+        
+        // Count the number of bidders for the auction
+        $numberOfBidders = Bid::where('auction_id', $id)->count();
+        
+        // Correctly generate the image URL
+        $imageUrl = $auction->itemDonation->image 
+            ? asset('storage/item_images/' . $auction->itemDonation->image) 
+            : 'https://via.placeholder.com/150'; // Placeholder image URL
+    
+        return response()->json([
+            'id' => $auction->id,
+            'title' => $auction->title,
+            'description' => $auction->description,
+            'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+            'start_date' => $auction->start_date,
+            'end_date' => $auction->end_date,
+            'number_of_bidders' => $numberOfBidders,
+            'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
+            'imageUrl' => $imageUrl, // Ensure this is set correctly
+        ]);
     }
+    
+    
+    
+    
+    
+    
+    
 
+    // عرض نموذج تعديل عنصر محدد (edit)
 
     public function edit($id)
     {
@@ -121,4 +147,21 @@ class AuctionController extends Controller
         $auction->delete();
         return response()->json(null, 204); 
     }
+
+
+    public function completeAuction($id)
+    {
+        $auction = Auction::findOrFail($id);
+
+        // Check if the auction has ended
+        if (now()->greaterThan($auction->end_date)) {
+            $auction->update(['auction_status_id' => 3]); // Mark auction as completed
+            $itemDonation = ItemDonation::find($auction->item_id);
+            $itemDonation->update(['status_id' => 1]); // Mark the item as sold
+            return response()->json(['message' => 'Auction completed, item marked as sold.']);
+        }
+
+        return response()->json(['message' => 'Auction is still ongoing.'], 400);
+    }
+
 }

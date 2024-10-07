@@ -10,29 +10,19 @@ class ItemDonation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'donor_id', 
-        'item_name', 
-        'value', 
-        'is_valuable', 
-        'condition', 
-        'status_id'
+        'donor_id',
+        'item_name',
+        'value',
+        'is_valuable',
+        'condition',
+        'status_id',
+        'image', 
     ];
 
-
-
-
-
-    public function auctions()
+    public function auction()
     {
-        return $this->hasMany(Auction::class, 'item_id');
+        return $this->hasOne(Auction::class, 'item_id', 'id'); 
     }
-
-
-
-
-
-
-
 
     public function donor()
     {

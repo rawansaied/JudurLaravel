@@ -1,14 +1,18 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Stripe\PaymentIntent;
+use Stripe\Stripe;
 use App\Models\Land;            
 use App\Models\ItemDonation;     
 use App\Models\Financial;       
 use App\Models\Donor;   
-use App\Models\LandStatus;        
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\LandStatus;
+use App\Models\Payment;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +21,7 @@ class DonationController extends Controller
     public function donateLand(Request $request)
     {
         // Validate the incoming request data
-        $validator = \Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'description' => 'required|string',
             'land_size' => 'required|numeric',
             'address' => 'required|string',
@@ -25,9 +29,13 @@ class DonationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            \Log::error('Validation errors:', $validator->errors()->toArray());
+            Log::error('Validation errors:', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        // Default proof of ownership
+        $defaultProofPath = 'default/ownership_proof.jpg';
+        $proofPath = $defaultProofPath;
 
         // Check if there is a pending status in the land_statuses table
         $pendingStatus = LandStatus::where('name', 'pending')->first();
@@ -62,90 +70,177 @@ class DonationController extends Controller
 
     
     
-    
-
     public function donateItem(Request $request)
     {
-        // Validate input data, excluding status_id as it will be set based on is_valuable
-        $validatedData = $request->validate([
-            'item_name' => 'required|string',
-            'value' => 'required|numeric',
-            'is_valuable' => 'required|boolean',
-            'condition' => 'required|string',
-        ]);
+        try {
+            // Validate the input data
+            $validatedData = $request->validate([
+                'item_name' => 'required|string',
+                'condition' => 'required|string', // Condition is required
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Image is required
+                'is_valuable' => 'required|boolean',
+                'value' => $request->is_valuable ? 'required|numeric' : 'nullable|numeric' // Value is required if item is valuable
+            ]);
     
-        // Get the logged-in user ID
-        $userId = auth()->id();
+            // Get the logged-in user ID
+            $userId = auth()->id();
     
-        // Find the donor associated with the logged-in user
-        $donor = Donor::where('user_id', $userId)->first();
-        if (!$donor) {
-            return response()->json(['error' => 'Donor not found.'], 404);
+            // Retrieve the donor based on the user ID
+            $donor = Donor::where('user_id', $userId)->first();
+    
+            // Check if donor exists
+            if (!$donor) {
+                return response()->json(['error' => 'Donor not found.'], 404);
+            }
+    
+            // Handle the uploaded image
+            $imagePath = $request->file('image')->store('item_images', 'public'); // Save the image
+    
+            // Set the status ID based on is_valuable value
+            if ($validatedData['is_valuable']) {
+                // If valuable, set status to 'pending'
+                $status = \App\Models\ItemStatus::where('status', 'pending')->first();
+                if (!$status) {
+                    return response()->json(['error' => 'Status "pending" not found.'], 404);
+                }
+                $statusId = $status->id;
+                $value = $validatedData['value']; // Get value from request if valuable
+            } else {
+                // If not valuable, set status to 'normal'
+                $status = \App\Models\ItemStatus::where('status', 'normal')->first();
+                if (!$status) {
+                    return response()->json(['error' => 'Status "normal" not found.'], 404);
+                }
+                $statusId = $status->id; // Use the ID of the normal status
+                $value = 0.00; // Set value to 0 if not valuable
+            }
+    
+            // Create the item donation
+            $itemDonation = ItemDonation::create([
+                'donor_id' => $donor->id,
+                'item_name' => $validatedData['item_name'],
+                'value' => $value, // Set value based on is_valuable
+                'is_valuable' => $validatedData['is_valuable'],
+                'condition' => $validatedData['condition'],
+                'status_id' => $statusId, // Set status to normal if not valuable
+                'image' => $imagePath, // Store the image path
+            ]);
+    
+            return response()->json([
+                'message' => 'Item donated successfully',
+                'item_donation' => $itemDonation,
+            ], 201);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Return validation errors to the frontend
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            // Handle other exceptions
+            return response()->json(['error' => 'Error donating item: ' . $e->getMessage()], 500);
         }
-    
-        // Get the 'pending' status ID
-        $pendingStatusId = DB::table('item_statuses')->where('status', 'pending')->value('id');
-        // Get the 'accepted' status ID (for non-valuable items, you can adjust this)
-        $acceptedStatusId = DB::table('item_statuses')->where('status', 'accepted')->value('id');
-    
-        if (!$pendingStatusId || !$acceptedStatusId) {
-            return response()->json(['error' => 'Status not found.'], 500);
-        }
-    
-        // Determine the status based on whether the item is valuable
-        $statusId = $validatedData['is_valuable'] ? $pendingStatusId : $acceptedStatusId;
-    
-        // Create the item donation with the determined status
-        $itemDonation = ItemDonation::create([
-            'donor_id' => $donor->id,  
-            'item_name' => $validatedData['item_name'],
-            'value' => $validatedData['value'],
-            'is_valuable' => $validatedData['is_valuable'],
-            'condition' => $validatedData['condition'],
-            'status_id' => $statusId,  // Set to 'pending' if valuable, otherwise 'accepted'
-        ]);
-    
-        return response()->json([
-            'message' => 'Item donated successfully',
-            'item_donation' => $itemDonation,
-        ], 201);
     }
+    
+    
+    
+    
+    
+    
+    
     
 
     public function donateMoney(Request $request)
-    {
-       
+{
+    // Log the incoming request data
+    Log::info('Incoming donation request:', $request->all());
 
-        $validatedData = $request->validate([
-            'amount' => 'required|numeric',
-            'currency' => 'required|string',
-            'payment_method' => 'required|string',
-        ]);
+    $validator = Validator::make($request->all(), [
+        'amount' => 'required|numeric|min:1',
+        'currency' => 'required|string',
+        'payment_method' => 'required|string',
+    ]);
 
-      
-        $userId = auth()->id();
-
-        
-        $donor = Donor::where('user_id', $userId)->first();
-        if (!$donor) {
-            return response()->json(['error' => 'Donor not found.'], 404);
-        }
-
-        $financial = Financial::create([
-            'donor_id' => $donor->id,  
-            'amount' => $validatedData['amount'],
-            'currency' => $validatedData['currency'],
-            'payment_method' => $validatedData['payment_method'],
-        ]);
-
-        return response()->json([
-            'message' => 'Money donated successfully',
-            'financial' => $financial,
-        ], 201);
+    if ($validator->fails()) {
+        Log::error('Validation errors:', $validator->errors()->toArray());
+        return response()->json(['errors' => $validator->errors()], 422);
     }
 
+    $userId = auth()->id();
+    Log::info('Authenticated User ID:', ['userId' => $userId]);  // Log the authenticated user ID
 
+    // Log the SQL queries
+    DB::enableQueryLog(); // Enable query logging
 
-
+    $donor = Donor::where('user_id', $userId)->first();
     
+    // Log the executed query
+    Log::info('Executed query to find donor:', DB::getQueryLog());
+    
+    if (!$donor) {
+        return response()->json(['error' => 'Donor not found.'], 404);
+    }
+
+    $financial = Financial::create([
+        'donor_id' => $donor->id,
+        'amount' => $request->amount,
+        'currency' => $request->currency,
+        'payment_method' => $request->payment_method,
+    ]);
+
+    // Use config() instead of env()
+    Stripe::setApiKey(config('services.stripe.secret'));
+
+    try {
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $request->amount * 100,
+            'currency' => $request->currency,
+            'payment_method_types' => ['card'],
+        ]);
+
+        // Log Stripe PaymentIntent details
+        Log::info('Stripe Payment Intent created:', [
+            'paymentIntent' => $paymentIntent,
+        ]);
+
+        Payment::create([
+            'stripe_payment_id' => $paymentIntent->id,
+            'user_id' => $userId,
+            'amount' => $request->amount,
+            'currency' => $request->currency,
+            'status' => $paymentIntent->status,
+        ]);
+
+        return response()->json(['message' => 'Money donated successfully', 'financial' => $financial, 'paymentIntent' => $paymentIntent], 201);
+    } catch (\Exception $e) {
+        Log::error('Payment error:', ['message' => $e->getMessage()]);
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
+public function createPayment(Request $request)
+{
+    // Log the incoming request data
+    Log::info('Incoming payment creation request:', $request->all());
+
+    // Use config() instead of env()
+    Stripe::setApiKey(config('services.stripe.secret'));
+
+    try {
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $request->input('amount') * 100,
+            'currency' => $request->input('currency'),
+            'payment_method_types' => ['card'],
+        ]);
+
+        // Log Stripe PaymentIntent details
+        Log::info('Stripe Payment Intent created:', [
+            'paymentIntent' => $paymentIntent,
+        ]);
+
+        return response()->json(['clientSecret' => $paymentIntent->client_secret, 'stripe_payment_id' => $paymentIntent->id]);
+    } catch (\Exception $e) {
+        Log::error('Payment creation error:', ['message' => $e->getMessage()]);
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
 }

@@ -26,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
         $this->configureRateLimiting();
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
 
       
     }
