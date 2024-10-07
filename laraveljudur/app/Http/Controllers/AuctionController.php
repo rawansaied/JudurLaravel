@@ -95,18 +95,22 @@ class AuctionController extends Controller
 
  
     public function show($id) {
+        // Retrieve the auction with the associated item donation and highest bidder
         $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
         
         // Count the number of bidders for the auction
         $numberOfBidders = Bid::where('auction_id', $id)->count();
-        
+    
+        // Ensure that itemDonation is loaded before trying to access its properties
+        $item = $auction->itemDonation;
+    
         // Correctly generate the image URL
-        $imageUrl = $auction->itemDonation->image 
-            ? asset('storage/item_images/' . $auction->itemDonation->image) 
+        $imageUrl = $item && $item->image 
+            ? asset('storage/item_images/' . $item->image) 
             : 'https://via.placeholder.com/150'; // Placeholder image URL
     
         return response()->json([
-            'id' => $auction->id,
+            'id' => $item ? $item->id : null, // Ensure there's an ID in item donations
             'title' => $auction->title,
             'description' => $auction->description,
             'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
@@ -117,9 +121,6 @@ class AuctionController extends Controller
             'imageUrl' => $imageUrl, // Ensure this is set correctly
         ]);
     }
-    
-    
-    
     
     
     
