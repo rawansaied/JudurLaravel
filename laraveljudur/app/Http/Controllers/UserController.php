@@ -99,13 +99,17 @@ class UserController extends Controller
         'name' => 'required|string',
         'email' => 'required|email|unique:users',
         'password' => 'required|string|min:6',
-        'role_id' => 'required|in:6,7' 
+        'age' => 'required|integer|min:0',
+        'phone' => 'required|string|max:15',
+        'role_id' => 'required|in:5,6' 
     ]);
 
     $user = User::create([
         'name' => $validatedData['name'],
         'email' => $validatedData['email'],
         'password' => bcrypt($validatedData['password']),
+        'age' => $validatedData['age'],
+        'phone' => $validatedData['phone'],
         'role_id' => $validatedData['role_id']
     ]);
 
