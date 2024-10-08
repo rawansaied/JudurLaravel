@@ -21,7 +21,7 @@ class LandInspectionController extends Controller
     {  
      
         // Fetch reports with examiner details
-        $reports = LandInspection::with('examiner', 'land')->get();
+        $reports = LandInspection::with('examiner', 'land', 'land.status')->get();
 
         return response()->json($reports);
     }

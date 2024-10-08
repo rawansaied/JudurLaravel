@@ -33,49 +33,64 @@ class EventController extends Controller
     }
     
     // Fetch a specific event by ID
+    // public function show($id)
+    // {
+    //     $event = Event::findOrFail($id);
+    
+    //     // Assuming 'image' is the column that stores the image filename
+    //     $event->image_url = asset('storage/' . $event->image);
+    
+    //     return response()->json($event);
+    // }
+
+
     public function show($id)
-    {
-        $event = Event::findOrFail($id);
-    
-        // Assuming 'image' is the column that stores the image filename
-        $event->image_url = asset('storage/' . $event->image);
-    
-        return response()->json($event);
-    }
+{
+    $event = Event::withCount('volunteers')->findOrFail($id);
 
-    public function joinEvent(Request $request)
-    {
-        $user = auth()->user();  // Get the authenticated user
-        $eventId = $request->input('event_id');
+    $event->image_url = asset('storage/' . $event->image);
+    $event->joined_volunteers_count = DB::table('event_volunteer')
+        ->where('event_id', $id)
+        ->count();
 
-        // Check if the user is a volunteer
-        if ($user->role_id === 3) { // Assuming 2 is for volunteers
-            $volunteer = Volunteer::where('user_id', $user->id)->first(); // Fetch volunteer by user_id
+    return response()->json($event);
+}
+public function joinEvent(Request $request)
+{
+    $user = auth()->user();  // Get the authenticated user
+    $eventId = $request->input('event_id');
 
-            // Check volunteer status
-            if ($volunteer && $volunteer->volunteer_status !== 2) { // Assuming 1 is 'approved'
-                return response()->json(['message' => 'Your registration is still under review'], 403);
-            }
+    // Check if the user is a volunteer
+    if ($user->role_id === 3) { 
+        $volunteer = Volunteer::where('user_id', $user->id)->first(); 
 
-            // Add the volunteer to the event
-            if (!$this->isVolunteerParticipating($volunteer->id, $eventId)) {
-                $this->addVolunteerToEvent($volunteer->id, $eventId);
-                return response()->json(['message' => 'Your registration is confirmed, you have been added to the event.'], 200);
-            } else {
-                return response()->json(['message' => 'You are already registered for this event'], 400);
-            }
+        // Check volunteer status
+        if ($volunteer && $volunteer->volunteer_status !== 2) { 
+            return response()->json(['message' => 'Your registration is still under review'], 403);
         }
-        $isAlreadyJoined = DB::table('event_volunteer')
-        ->where('volunteer_id', $user->id)
-        ->where('event_id', $eventId)
-        ->exists();
 
-    if ($isAlreadyJoined) {
-        return response()->json(['message' => 'You are already registered for this event'], 400);
+        // Fetch the event and check if the volunteer limit has been reached
+        $event = Event::find($eventId);
+        $joinedVolunteersCount = DB::table('event_volunteer')
+            ->where('event_id', $eventId)
+            ->count();
+
+        if ($joinedVolunteersCount >= $event->expected_organizer_number) {
+            return response()->json(['message' => 'The event is full'], 400);
+        }
+
+        // Add the volunteer to the event
+        if (!$this->isVolunteerParticipating($volunteer->id, $eventId)) {
+            $this->addVolunteerToEvent($volunteer->id, $eventId);
+            return response()->json(['message' => 'Your registration is confirmed, you have been added to the event.'], 200);
+        } else {
+            return response()->json(['message' => 'You are already registered for this event'], 400);
+        }
     }
 
-        return response()->json(['message' => 'You must be a volunteer to join an event'], 403);
-    }
+    return response()->json(['message' => 'You must be a volunteer to join an event'], 403);
+}
+
 
     public function cancelEvent(Request $request, $eventId)
     {
@@ -124,20 +139,36 @@ class EventController extends Controller
             ->exists();
     }
    
-public function isVolunteerJoined(Request $request, $eventId)
-{
-    $user = auth()->user();
-
-    if (!$user) {
-        return response()->json(['message' => 'User not authenticated'], 401);  // Handle unauthenticated users
+    public function isVolunteerJoined(Request $request, $eventId)
+    {
+        $user = auth()->user();
+    
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);  // Handle unauthenticated users
+        }
+    
+        $volunteer = Volunteer::where('user_id', $user->id)->first();
+    
+        if (!$volunteer) {
+            return response()->json(['isJoined' => false, 'joined_volunteers_count' => 0, 'expected_organizer_number' => 0], 200);
+        }
+    
+        $isParticipating = DB::table('event_volunteer')
+            ->where('volunteer_id', $volunteer->id)
+            ->where('event_id', $eventId)
+            ->exists();
+    
+        $joinedVolunteersCount = DB::table('event_volunteer')
+            ->where('event_id', $eventId)
+            ->count();
+    
+        $event = Event::find($eventId);
+    
+        return response()->json([
+            'isJoined' => $isParticipating,
+            'joined_volunteers_count' => $joinedVolunteersCount,
+            'expected_organizer_number' => $event->expected_organizer_number
+        ], 200);
     }
-
-    $isParticipating = DB::table('event_volunteer')
-        ->where('volunteer_id', $user->id)
-        ->where('event_id', $eventId)
-        ->exists();
-
-    return response()->json(['isJoined' => $isParticipating], 200);
-}
     
 }
