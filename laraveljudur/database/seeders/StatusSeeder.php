@@ -23,6 +23,7 @@ class StatusSeeder extends Seeder
         ItemStatus::create(['status' => 'Pending']);
         ItemStatus::create(['status' => 'Accepted']);
         ItemStatus::create(['status' => 'Rejected']);
+        ItemStatus::create(['status' => 'Normal']);
 
     }
 }

@@ -10,10 +10,11 @@ use Stripe\Stripe;
 use App\Models\Land;            
 use App\Models\ItemDonation;     
 use App\Models\Financial;       
-use App\Models\Donor;   
+use App\Models\Donor;
+use App\Models\Inventory;
 use App\Models\LandStatus;
 use App\Models\Payment;
-
+use App\Models\Treasury;
 use Illuminate\Support\Facades\Auth;
 
 class DonationController extends Controller
@@ -106,6 +107,12 @@ class DonationController extends Controller
                 $statusId = $status->id;
                 $value = $validatedData['value']; // Get value from request if valuable
             } else {
+
+                $inventory = Inventory::where('id', 1)->first();
+                $old_value = $inventory->items;
+                $new_value = $old_value + $request->quantity;
+                $inventory->update(['items' => $new_value]); 
+
                 // If not valuable, set status to 'normal'
                 $status = \App\Models\ItemStatus::where('status', 'normal')->first();
                 if (!$status) {
@@ -165,7 +172,7 @@ class DonationController extends Controller
     }
 
     $userId = auth()->id();
-    Log::info('Authenticated User ID:', ['userId' => $userId]);  // Log the authenticated user ID
+    Log::info('Authenticated User ID:', ['userId' => $userId]);  // Log the authenticated use
 
     // Log the SQL queries
     DB::enableQueryLog(); // Enable query logging
@@ -185,6 +192,11 @@ class DonationController extends Controller
         'currency' => $request->currency,
         'payment_method' => $request->payment_method,
     ]);
+
+    $treasury = Treasury::where('id', 1)->first();
+    $old_money = $treasury->money;
+    $new_money = $old_money + $request->amount;
+    $treasury->update(['money' => $new_money]);
 
     // Use config() instead of env()
     Stripe::setApiKey(config('services.stripe.secret'));
