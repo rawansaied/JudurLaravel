@@ -3192,8 +3192,6 @@
             "time": "2024-09-09T07:06:30+00:00"
         },
         {
-<<<<<<< HEAD
-=======
             "name": "paragonie/random_compat",
             "version": "v9.99.100",
             "source": {
@@ -3426,7 +3424,6 @@
             "time": "2021-09-14T21:35:26+00:00"
         },
         {
->>>>>>> basma
             "name": "php-http/client-common",
             "version": "2.7.2",
             "source": {
