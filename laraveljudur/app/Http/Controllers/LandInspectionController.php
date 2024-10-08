@@ -42,6 +42,10 @@ class LandInspectionController extends Controller
      */
     public function show($id) {
         $report = LandInspection::with('examiner', 'land', 'inspections')->findOrFail($id);
+        if ($report->photo_path) {
+            $report->photo_path = asset('storage/' . $report->photo_path);  // Returns full URL to image
+        }
+    
         return response()->json($report);
     }
     /**
