@@ -125,31 +125,32 @@ class VolunteerAnalyticsController extends Controller
     
 
     public function notifyLandOwner(Request $request)
-    {
-        $request->validate([
-            'landId' => 'required|integer',
-            'inspectionDate' => 'required|date',
-        ]);
+{
+    $request->validate([
+        'landId' => 'required|integer',
+        'inspectionDate' => 'required|date',
+    ]);
 
-        // Get the landId and inspectionDate from the request
-        $landId = $request->input('landId');
-        $inspectionDate = $request->input('inspectionDate');
+    $landId = $request->input('landId');
+    $land = Land::find($landId);
 
-        // Find the land with the given ID
-        $land = Land::find($landId);
-
-        if (!$land || $land->status_id != 3) { // Ensure the land has pending status
-            return response()->json(['message' => 'Land with pending status not found.'], 404);
-        }
-
-        // Find the land owner (assuming donor_id relates to a User)
-        $landOwner = User::find($land->donor_id);
-
-        // if ($landOwner) {
-        //     Mail::to($landOwner->email)->send(new InspectionScheduled($land, $inspectionDate));
-        //     return response()->json(['message' => 'Land owner notified successfully.'], 200);
-        // } else {
-        //     return response()->json(['message' => 'Land owner not found.'], 404);
-        // }
+    if ($land) {
+        Log::info('Land found:', ['landId' => $landId, 'status_id' => $land->status_id]);
+    } else {
+        Log::info('Land not found:', ['landId' => $landId]);
     }
+
+    if (!$land || $land->status_id != 1) {
+        return response()->json(['message' => 'Land with pending status not found.'], 404);
+    }
+
+    $landOwner = User::find($land->donor_id);
+    if ($landOwner) {
+        // Mail::to($landOwner->email)->send(new InspectionScheduled($land, $inspectionDate));
+        return response()->json(['message' => 'Land owner notified successfully.'], 200);
+    } else {
+        return response()->json(['message' => 'Land owner not found.'], 404);
+    }
+}
+
 }

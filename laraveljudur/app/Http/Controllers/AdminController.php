@@ -105,13 +105,23 @@ public function examinerDetails($id)
 public function updateExaminerStatus(Request $request, $id)
 {
     $examiner = Examiner::findOrFail($id);
+    
     $examiner->examiner_status = $request->input('status');
+
     if ($examiner->save()) {
+        $volunteer = Volunteer::where('user_id', $examiner->user_id)->first(); // Assuming examiner has a user_id
+
+        if ($volunteer) {
+            $volunteer->examiner = 1; 
+            $volunteer->save(); 
+        }
+
         return response()->json(['success' => true]);
     } else {
         return response()->json(['success' => false], 500);
     }
 }
+
 
 public function getEvents()
 {
