@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
         $this->call(ExaminerStatusesSeeder::class);
         $this->call(EventStatusesSeeder::class);
         $this->call(AuctionStatusSeeder::class);
+        $this->call(TreasurySeeder::class);
+        $this->call(InventorySeeder::class);
 
 
 

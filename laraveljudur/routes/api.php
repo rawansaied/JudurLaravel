@@ -137,8 +137,9 @@ Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('c
 // Route to handle the form submission
 Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
 
-
-
+// Route::post('/auction/{auctionId}/complete', [BidController::class, 'getAuctionWinnerAndStorePayment']);
+Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 
 
 // Route::get('/auctions', [AuctionController::class, 'index']);
@@ -212,6 +213,7 @@ Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStat
 
 Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
 Route::get('/dashboard/events/{id}', [AdminController::class, 'eventDetails']);
+Route::get('/dashboard/main/index', [AdminController::class, 'index']);
 
 Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']);
 Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']);
@@ -223,8 +225,14 @@ Route::get('/dashboard/auctions/{id}', [AdminController::class, 'auctionDetails'
 Route::post('/dashboard/auctions', [AdminController::class, 'createAuction']);
 Route::get('/dashboard/statuses/auctions', [AdminController::class, 'getAuctionStatuses']);
 Route::get('/dashboard/items/auctions', [AdminController::class, 'getAuctionItems']);
+Route::get('/dashboard/allitems/auctions', [AdminController::class, 'getAllItems']);
+Route::get('/dashboard/valuableitems/itemDonation/{id}', [AdminController::class, 'getValuableItemDetails']);
+
 Route::put('/dashboard/auctions/{id}', [AdminController::class, 'editAuction']);
 Route::delete('/dashboard/auctions/{id}', [AdminController::class, 'deleteAuction']);
+Route::get('/pie-chart-data', [AdminController::class, 'getPieChartData']);
+Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
+
 // Dashboard Routes End
 
 

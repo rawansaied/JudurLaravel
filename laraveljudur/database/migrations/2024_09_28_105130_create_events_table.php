@@ -16,6 +16,8 @@ class CreateEventsTable extends Migration
             $table->date('date');
             $table->time('time');
             $table->integer('expected_organizer_number');
+            $table->integer('allocatedMoney');
+            $table->integer('allocatedItems');
             $table->unsignedBigInteger('event_status');
             $table->string('image')->nullable(); 
             $table->string('location')->nullable(); 

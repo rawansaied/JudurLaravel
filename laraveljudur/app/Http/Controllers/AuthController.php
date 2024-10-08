@@ -131,6 +131,7 @@ class AuthController extends Controller
                 'skills' => $validated['skills'],
                 'availability' => $validated['availability'],
                 'aim' => $validated['aim'],
+                'volunteer_status'=> 1,
             ]);
 
             Log::info('Volunteer registered successfully', ['user_id' => $user->id]);

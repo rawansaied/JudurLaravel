@@ -7,17 +7,87 @@ use App\Models\AuctionStatus;
 use App\Models\Donor;
 use App\Models\Event;
 use App\Models\Examiner;
+use App\Models\Financial;
+use App\Models\Inventory;
 use App\Models\ItemDonation;
 use App\Models\Land;
+use App\Models\Treasury;
 use App\Models\User;
 use App\Models\Volunteer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\EventNotification;
 use App\Events\EventCreated;
 class AdminController extends Controller
 {
+    public function index()
+    {
+        $donations = DB::table('financials')
+                        ->select(DB::raw('SUM(amount) as total_amount'), DB::raw('MONTH(created_at) as month'))
+                        ->groupBy(DB::raw('MONTH(created_at)'))
+                        ->get();
+    
+        return response()->json($donations);
+    }
+    public function getPieChartData()
+    {
+        $donorsCount = Donor::count(); 
+        $volunteersCount = Volunteer::where('volunteer_status', 2)->count(); 
+        $examinersCount = Examiner::where('examiner_status', 2)->count(); 
+
+        return response()->json([
+            'donors' => $donorsCount,
+            'volunteers' => $volunteersCount,
+            'examiners' => $examinersCount, 
+        ]);
+    }
+
+    public function getDashboardData()
+    {
+        $lastMonthDonations = DB::table('financials')
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->sum('amount');
+
+        $totalDonations = DB::table('financials')->sum('amount');
+
+        $totalHubs = DB::table('lands')
+            ->where('status_id', 2)
+            ->count();
+
+        $pendingUserRequests = DB::table('examiners')
+            ->where('examiner_status', 2)
+            ->count() + DB::table('volunteers')
+            ->where('volunteer_status', 2)
+            ->count();
+
+        $totalDonors = DB::table('donors')->count();
+
+        $totalVolunteers = DB::table('volunteers')
+            ->where('volunteer_status', 2)
+            ->count();
+
+        $totalExaminers = DB::table('examiners')
+            ->where('examiner_status', 2)
+            ->count();
+
+        $valuableItemChecks = DB::table('item_donations')
+            ->where('status_id', 1)
+            ->count();
+
+        return response()->json([
+            'last_month_donations' => $lastMonthDonations,
+            'total_donations' => $totalDonations,
+            'total_hubs' => $totalHubs,
+            'pending_user_requests' => $pendingUserRequests,
+            'total_donors' => $totalDonors,
+            'total_volunteers' => $totalVolunteers,
+            'total_examiners' => $totalExaminers,
+            'valuable_item_checks' => $valuableItemChecks,
+        ]);
+    }
+    
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Users section
     public function getDonors()
@@ -156,6 +226,8 @@ public function createEvent(Request $request)
         'date' => 'required|date',
         'time' => 'required',
         'expected_organizer_number' => 'required|integer|min:1',
+        'allocatedMoney' => 'nullable|integer|min:0',
+        'allocatedItems' => 'nullable|integer|min:0',
         'event_status' => 'required|integer|in:1,2,3,4',
         'description' => 'required|string',
         'duration' => 'nullable|integer|min:0',
@@ -164,13 +236,30 @@ public function createEvent(Request $request)
         'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
     ]);
 
-    $event = new Event();
+    $treasury = Treasury::where('id', 1)->first();
+    $old_money = $treasury->money;
+    $inventory = Inventory::where('id', 1)->first();
+    $old_items = $inventory->items;
 
+    if ($request->allocatedMoney > $old_money) {
+        return response()->json(['error' => 'Insufficient funds in the treasury'], 400);
+    }
+    if ($request->allocatedItems > $old_items) {
+        return response()->json(['error' => 'Insufficient Wuantity in the Inventory'], 400);
+    }
+
+    $event = new Event();
     $event->fill($validatedData);
 
     if ($request->hasFile('image')) {
         $event->image = $request->file('image')->store('images', 'public');
     }
+
+    $new_money = $old_money - $request->allocatedMoney;
+    $treasury->update(['money' => $new_money]);
+    $new_items = $old_items - $request->allocatedItems;
+    $inventory->update(['items' => $new_items]);
+    
 
     if ($event->save()) {
         return response()->json(['message' => 'Event created successfully', 'data' => $event], 201);
@@ -185,6 +274,7 @@ public function createEvent(Request $request)
 }
 
 
+
 public function editEvent(Request $request, $id)
 {
     $validatedData = $request->validate([
@@ -194,6 +284,8 @@ public function editEvent(Request $request, $id)
         'date' => 'required|date',
         'time' => 'required',
         'expected_organizer_number' => 'required|integer|min:1',
+        'allocatedMoney' => 'nullable|integer|min:0',
+        'allocatedItems' => 'nullable|integer|min:0',
         'event_status' => 'required|integer|in:1,2,3,4',
         'description' => 'required|string',
         'duration' => 'nullable|integer|min:0',
@@ -203,6 +295,29 @@ public function editEvent(Request $request, $id)
     ]);
 
     $event = Event::findOrFail($id);
+    $old_value = $event->allocatedMoney;
+    $treasury = Treasury::where('id', 1)->first();
+    $old_money = $treasury->money;
+    $old_money += $old_value;
+
+    $old_value_items = $event->allocatedItems;
+    $inventory = Inventory::where('id', 1)->first();
+    $oldItem = $inventory->items;
+    $oldItem += $old_value_items;
+
+    if ($request->allocatedMoney > $old_money) {
+        return response()->json(['error' => 'Insufficient funds in the treasury'], 400);
+    }
+    if ($request->allocatedItems > $oldItem) {
+        return response()->json(['error' => 'Insufficient quantity in the Inventory'], 400);
+    }
+
+
+    $new_money = $old_money - $request->allocatedMoney;
+    $treasury->update(['money' => $new_money]);
+
+    $new_items = $oldItem - $request->allocatedItems;
+    $inventory->update(['items' => $new_items]);
 
     $event->fill($validatedData);
 
@@ -217,7 +332,6 @@ public function editEvent(Request $request, $id)
             }
 
             $imageData = substr($imageData, strpos($imageData, ',') + 1);
-
             $imageData = base64_decode($imageData);
 
             if ($imageData === false) {
@@ -241,15 +355,27 @@ public function editEvent(Request $request, $id)
 }
 
 
+
 public function deleteEvent($id)
 {
     $event = Event::findOrFail($id);
+    $old_value = $event->allocatedMoney;
+    $old_value_items = $event->allocatedItems;
 
     if ($event->image) {
         Storage::disk('public')->delete($event->image);
     }
 
     $event->delete();
+    $treasury = Treasury::where('id', 1)->first();
+    $old_money = $treasury->money;
+    $new_money = $old_money + $old_value;
+    $treasury->update(['money' => $new_money]);
+
+    $inventory = Inventory::where('id', 1)->first();
+    $old_item = $inventory->items;
+    $new_item = $old_item + $old_value_items;
+    $inventory->update(['items' => $new_item]);
 
     return response()->json(['message' => 'Event deleted successfully'], 204);
 }
@@ -338,9 +464,22 @@ public function getAuctionStatuses()
 
 public function getAuctionItems()
 {
+    $items = ItemDonation::where('status_id', 1)->with('donor')->get(); 
+    return response()->json($items, 200);
+}
+
+public function getAllItems()
+{
     $items = ItemDonation::all(); 
     return response()->json($items, 200);
 }
+
+public function getValuableItemDetails($id)
+{
+    $items = ItemDonation::findOrFail($id); 
+    return response()->json($items, 200);
+}
+
 
 
 

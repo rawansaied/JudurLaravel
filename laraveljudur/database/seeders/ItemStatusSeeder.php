@@ -16,7 +16,7 @@ class ItemStatusSeeder extends Seeder
             ['status' => 'pending'],
             ['status' => 'accepted'],
             ['status' => 'rejected'],
-            ['status' => 'normal'], // New status added
+            ['status' => 'normal'], 
         ]);
     }
 }

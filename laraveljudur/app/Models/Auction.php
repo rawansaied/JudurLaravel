@@ -29,5 +29,13 @@ class Auction extends Model
     public function highestBidder()
     {
         return $this->belongsTo(User::class, 'highest_bidder_id');
+    } 
+    public function bids()
+    {
+        return $this->hasMany(Bid::class);
     }
+
+  
+
+
 }
