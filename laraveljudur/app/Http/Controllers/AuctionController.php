@@ -1,68 +1,5 @@
 <?php
 
-// namespace App\Http\Controllers;
-
-// use Illuminate\Http\Request;
-
-// class AuctionController extends Controller
-// {
-//     /**
-//      * Display a listing of the resource.
-//      */
-//     public function index()
-//     {
-//         //
-//     }
-
-//     /**
-//      * Show the form for creating a new resource.
-//      */
-//     public function create()
-//     {
-//         //
-//     }
-
-//     /**
-//      * Store a newly created resource in storage.
-//      */
-//     public function store(Request $request)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Display the specified resource.
-//      */
-//     public function show(string $id)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Show the form for editing the specified resource.
-//      */
-//     public function edit(string $id)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Update the specified resource in storage.
-//      */
-//     public function update(Request $request, string $id)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Remove the specified resource from storage.
-//      */
-//     public function destroy(string $id)
-//     {
-//         //
-//     }
-// }
-
 
 namespace App\Http\Controllers;
 
@@ -75,12 +12,34 @@ use Illuminate\Http\Request;
 
 class AuctionController extends Controller
 {public function index() {
-    $auctions = Auction::with('itemDonation')
-                ->where('auction_status_id', 2) // 2 represents 'Ongoing'
-                ->where('end_date', '>', now()) // Only fetch auctions that haven't ended yet
-                ->get();
-    
-    return response()->json($auctions);
+    // Fetch ongoing auctions with related item donations
+    $auctions = Auction::with('itemDonation')->where('auction_status_id', 2) // Ongoing
+                        ->where('end_date', '>', now()) // Not yet ended
+                        ->get();
+
+    // Format the response
+    $formattedAuctions = $auctions->map(function ($auction) {
+        // Construct image URL
+        $imageUrl = $auction->itemDonation->image 
+            ? asset('storage/' . $auction->itemDonation->image) 
+            : 'https://via.placeholder.com/150'; // Placeholder image
+
+        return [
+            'id' => $auction->id,
+            'title' => $auction->title,
+            'description' => $auction->description,
+            'starting_price' => $auction->starting_price,
+            'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+            'start_date' => $auction->start_date,
+            'end_date' => $auction->end_date,
+            'item_name' => $auction->itemDonation->item_name,
+            'item_value' => $auction->itemDonation->value,
+            'item_condition' => $auction->itemDonation->condition,
+            'image_url' => $imageUrl,
+        ];
+    });
+
+    return response()->json($formattedAuctions);
 }
 
     
@@ -100,10 +59,9 @@ class AuctionController extends Controller
         // Count the number of bidders for the auction
         $numberOfBidders = Bid::where('auction_id', $id)->count();
         
-        // Correctly generate the image URL
         $imageUrl = $auction->itemDonation->image 
-            ? asset('storage/item_images/' . $auction->itemDonation->image) 
-            : 'https://via.placeholder.com/150'; // Placeholder image URL
+        ? asset('storage/' . $auction->itemDonation->image) 
+        : 'https://via.placeholder.com/150'; // Placeholder image URL
     
         return response()->json([
             'id' => $auction->id,

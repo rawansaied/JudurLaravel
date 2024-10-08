@@ -27,7 +27,7 @@ class LandInspection extends Model
     }
     public function inspections()
     {
-        return $this->belongsTo(LandInspection::class); // Adjust to the appropriate model and relationship
+        return $this->belongsTo(LandInspection::class);
     }
 }
 

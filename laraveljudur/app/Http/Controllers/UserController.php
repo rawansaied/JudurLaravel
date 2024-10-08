@@ -68,7 +68,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'age' => 'integer|min:1',
-            'phone' => 'string|size:10',
+            'phone' => 'string|size:11',
             'password' => 'nullable|string|min:6',
             'profile_picture' => 'nullable|string' // Expecting Base64 image string
         ]);

@@ -18,6 +18,17 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
+use App\Events\EventCreated;
+Route::put('/lands/{id}/accept', [LandController::class, 'accept']);
+Route::put('/lands/{id}/reject', [LandController::class, 'reject']);
+Route::put('/examiner-reports/report-details/{id}/status', [LandController::class, 'updateStatus']);
+
+Route::get('/trigger-event', function() {
+    // Trigger the event with a message
+    broadcast(new EventCreated('This is a test notification!'));
+    
+    return 'Event broadcasted!';
+});
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
@@ -25,23 +36,23 @@ Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventContr
 use App\Http\Controllers\PaymentController;
 
 // Your routes/api.php
-//////////working 
+//////////working
 use App\Http\Controllers\VolunteerController;
 
 Route::middleware('auth:sanctum')->resource('volunteers', VolunteerController::class);
 Route::middleware('auth:sanctum')->post('/volunteer/request-examiner', [VolunteerController::class, 'requestExaminer']);
 Route::middleware('auth:sanctum')->get('/volunteer/check-examiner-request', [VolunteerController::class, 'checkExaminerRequest']);
 
- 
+
     // Create a payment and redirect to PayPal for approval
-   
+
 
 
     // Route::middleware('auth:sanctum')->group(function () {
     //     Route::post('/initiate-payment', [PaymentController::class, 'initiatePayment']);
     // });
-    
-    
+
+
 
 ////////////////////////
 
@@ -56,6 +67,7 @@ Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
 Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');
 
+Route::get('/posts/{id}', [PostController::class, 'show']);
 
 
 
@@ -189,11 +201,11 @@ Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStat
 
 
 
-    Route::get('/users', [UserController::class, 'index']); 
-    Route::post('/users', [UserController::class, 'store']); 
-    Route::get('/users/{id}', [UserController::class,'show']); 
-    Route::put('/users/{id}', [UserController::class, 'update']); 
-    Route::delete('/users/{id}', [UserController::class, 'destroy']); 
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{id}', [UserController::class,'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 
 
@@ -201,8 +213,8 @@ Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
 Route::get('/dashboard/events/{id}', [AdminController::class, 'eventDetails']);
 Route::get('/dashboard/main/index', [AdminController::class, 'index']);
 
-Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']); 
-Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']); 
+Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']);
+Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']);
 Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
 Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
@@ -240,7 +252,7 @@ Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
     $token = Str::random(60);
-    
+
     // Insert the token manually for testing
     DB::table('password_reset_tokens')->insert([
         'email' => $request->email,
