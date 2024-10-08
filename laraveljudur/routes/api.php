@@ -137,8 +137,9 @@ Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('c
 // Route to handle the form submission
 Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
 
-
-
+// Route::post('/auction/{auctionId}/complete', [BidController::class, 'getAuctionWinnerAndStorePayment']);
+Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 
 
 // Route::get('/auctions', [AuctionController::class, 'index']);

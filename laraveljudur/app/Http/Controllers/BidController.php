@@ -121,6 +121,45 @@ public function completeAuction($id) {
 
     return response()->json(['message' => 'Auction is still ongoing'], 400);
 }
+public function getAuctionWinnerAndStorePayment($auctionId)
+{
+    // Find the auction
+    $auction = Auction::findOrFail($auctionId);
+    
+    // Ensure the auction has ended
+    if (now()->lessThan($auction->end_date)) {
+        return response()->json(['message' => 'The auction is still ongoing.'], 400);
+    }
+
+    // Get the highest bid for the auction
+    $highestBid = Bid::where('auction_id', $auctionId)
+                     ->orderBy('bid_amount', 'desc')
+                     ->first();
+    
+    if (!$highestBid) {
+        return response()->json(['message' => 'No bids were placed on this auction.'], 404);
+    }
+
+    // The winner is the user who placed the highest bid
+    $winnerId = $highestBid->user_id;
+    $amountToPay = $highestBid->bid_amount;
+
+    // Store the payment information in the payments table
+    $payment = new \App\Models\Payment();  // Assuming Payment is your model for the payments table
+    $payment->auction_id = $auctionId;
+    $payment->user_id = $winnerId;
+    $payment->amount = $amountToPay;
+    $payment->status = 'pending'; // Set the initial payment status
+    $payment->save();
+
+    // Return the winner information and payment details
+    return response()->json([
+        'message' => 'Auction completed successfully',
+        'winner_id' => $winnerId,
+        'amount_to_pay' => $amountToPay,
+        'payment_status' => $payment->status,
+    ]);
+}
 
 
 }
