@@ -156,7 +156,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
 });
 Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
-
+Route::post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
+ 
 ////
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -233,7 +234,7 @@ Route::post('/create-payment', [DonationController::class, 'createPayment']);
 Route::post('/login', [AuthController::class, 'login']);
 
 
-
+  
 
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
