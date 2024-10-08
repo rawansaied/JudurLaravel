@@ -121,42 +121,64 @@ class AuctionController extends Controller
         return response()->json(['message' => 'Auction is still ongoing.'], 400);
     }
     public function getCompletedAuctions()
-    {
-        // Get the currently authenticated user ID
-        $userId = auth()->id();
-    
-        // Get completed auctions where the auction has ended
-        $completedAuctions = Auction::where('end_date', '<', now())
-            ->with(['bids', 'itemDonation'])  // Include itemDonation relation, no need for highestBidder here
-            ->get();
-    
-        $auctionWinners = [];
-    
-        foreach ($completedAuctions as $auction) {
-            // Get the highest bid for the auction
-            $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
-    
-            // If there is a highest bid and the user is the highest bidder
-            if ($highestBid && $highestBid->user_id == $userId) {
-                // Check if the image exists and create the correct URL
-                $imageUrl = $auction->itemDonation->image 
-                    ? asset('storage/' . $auction->itemDonation->image) 
-                    : 'https://via.placeholder.com/150';  // Fallback placeholder image
-    
-                // Append the auction details to the response if the user is the highest bidder
-                $auctionWinners[] = [
-                    'auction_id' => $auction->id,
-                    'auction_title' => $auction->title,
-                    'auction_image' => $imageUrl,  // Use the constructed image URL here
-                    'highest_bidder_id' => $highestBid->user_id,
-                    'highest_bidder_name' => $highestBid->user->name,
-                    'bid_amount' => $highestBid->bid_amount,
-                ];
-            }
+{
+    // Get the currently authenticated user ID
+    $userId = auth()->id();
+
+    // Get completed auctions where the auction has ended
+    $completedAuctions = Auction::where('end_date', '<', now())
+        ->with(['bids', 'itemDonation']) // Include itemDonation relation
+        ->get();
+
+    $auctionWinners = [];
+
+    foreach ($completedAuctions as $auction) {
+        // Get the highest bid for the auction
+        $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
+
+        // If there is a highest bid and the user is the highest bidder
+        if ($highestBid && $highestBid->user_id == $userId) {
+            // Check if the image exists and create the correct URL
+            $imageUrl = $auction->itemDonation->image
+                ? asset('storage/' . $auction->itemDonation->image)
+                : 'https://via.placeholder.com/150'; // Fallback placeholder image
+
+            // Append the auction details to the response if the user is the highest bidder
+            $auctionWinners[] = [
+                'auction_id' => $auction->id,
+                'auction_title' => $auction->title,
+                'auction_image' => $imageUrl,
+                'highest_bidder_id' => $highestBid->user_id,
+                'highest_bidder_name' => $highestBid->user->name,
+                'bid_amount' => $highestBid->bid_amount, // Store the highest bid amount
+            ];
         }
-    
-        return response()->json($auctionWinners);
     }
+
+    return response()->json($auctionWinners);
+}
+
+public function getHighestBid($id)
+    {
+        // Find the auction by ID
+        $auction = Auction::find($id);
+        
+        if (!$auction) {
+            return response()->json(['error' => 'Auction not found'], 404);
+        }
+
+        // Get the highest bid for the auction
+        $highestBid = Bid::where('auction_id', $id)
+            ->orderBy('amount', 'desc')
+            ->first();
+
+        if ($highestBid) {
+            return response()->json(['amount' => $highestBid->amount]);
+        } else {
+            return response()->json(['amount' => 0]); // No bids yet
+        }
+    }
+
     
 
 }
