@@ -1,7 +1,7 @@
 <?php
 
-
 namespace App\Http\Controllers;
+
 use App\Models\Land;
 use App\Models\LandInspection;
 use App\Models\Volunteer;
@@ -10,8 +10,59 @@ use App\Models\LandStatus;
 use Illuminate\Support\Facades\Auth;
 
 
+
+
 class LandInspectionController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+
+        // Fetch reports with examiner details
+        $reports = LandInspection::with('examiner', 'land', 'land.status')->get();
+
+        return response()->json($reports);
+    }
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id) {
+        $report = LandInspection::with('examiner', 'land', 'inspections')->findOrFail($id);
+        if ($report->photo_path) {
+            $report->photo_path = asset('storage/' . $report->photo_path);  // Returns full URL to image
+        }
+    
+        return response()->json($report);
+    }
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -34,12 +85,12 @@ class LandInspectionController extends Controller
             'date' => 'required|date',
             'hygiene' => 'required|string|max:255',
             'capacity' => 'required|integer',
-            'electricity_supply' => 'required|boolean', 
+            'electricity_supply' => 'required|boolean',
             'general_condition' => 'required|string|max:255',
             'photo' => 'nullable|file|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        
+
         $landInspection = LandInspection::create([
             'land_id' => $validated['land_id'],
             'date' => $validated['date'],
@@ -70,4 +121,20 @@ class LandInspectionController extends Controller
 
         return response()->json($lands);
 }
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id)
+    {
+        $report = LandInspection::find($id);
+
+        if (!$report) {
+            return response()->json(['message' => 'Report not found'], 404);
+        }
+
+        // Optional: Handle any relationships if necessary, e.g. cascade delete
+
+        $report->delete();
+        return response()->json(['message' => 'Report deleted successfully'], 200);
+    }
 }

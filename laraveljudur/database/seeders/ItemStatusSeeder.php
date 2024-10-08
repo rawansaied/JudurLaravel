@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -17,6 +16,7 @@ class ItemStatusSeeder extends Seeder
             ['status' => 'pending'],
             ['status' => 'accepted'],
             ['status' => 'rejected'],
+            ['status' => 'normal'], // New status added
         ]);
     }
 }

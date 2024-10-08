@@ -15,7 +15,7 @@ class CreateUsersTable extends Migration
             $table->unsignedBigInteger('role_id')->default(1);
             $table->integer('age')->nullable();
             $table->string('phone', 255)->nullable(); 
-
+            $table->string('profile_picture')->nullable();
             $table->timestamps();
 
             $table->foreign('role_id')->references('id')->on('roles');

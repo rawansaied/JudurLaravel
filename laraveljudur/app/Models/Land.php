@@ -27,6 +27,7 @@ class Land extends Model
     {
         return $this->belongsTo(LandStatus::class, 'status_id');
     }
+
     public function volunteer()
     {
         return $this->belongsTo(Volunteer::class);

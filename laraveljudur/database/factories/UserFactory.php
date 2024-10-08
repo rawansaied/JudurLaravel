@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'role_id' => $this->faker->numberBetween(2, 3), 
             'age' => $this->faker->numberBetween(18, 65),
             'phone' => $this->faker->phoneNumber(),
+            'profile_picture' => $this->faker->imageUrl(640, 480, 'people', true),
         ];
     }
 

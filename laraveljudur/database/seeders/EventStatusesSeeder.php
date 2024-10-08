@@ -15,7 +15,7 @@ class EventStatusesSeeder extends Seeder
     {
         DB::table('event_statuses')->insert([
             ['name' => 'Preparing'],
-            ['name' => 'Scheduled'],
+            ['name' => 'Upcoming'],
             ['name' => 'Completed'],
             ['name' => 'Cancelled'],
         ]);

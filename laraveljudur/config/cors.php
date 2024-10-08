@@ -15,11 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'storage/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:4200'],
+    'allowed_origins' => ['http://localhost:4200', 'https://your-frontend.com'],
 
     'allowed_origins_patterns' => [],
 
@@ -28,10 +28,6 @@ return [
     'exposed_headers' => [],
 
     'max_age' => 0,
-    'allowed_origins' => ['*'],
 
-
-    'supports_credentials' => true ,
-    'allowed_origins' => ['http://localhost:4200', 'https://your-frontend.com'],
-
+    'supports_credentials' => true,
 ];

@@ -15,27 +15,44 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandInspectionController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\LandController;
+use App\Http\Controllers\BidController;
+use App\Events\EventCreated;
+Route::put('/lands/{id}/accept', [LandController::class, 'accept']);
+Route::put('/lands/{id}/reject', [LandController::class, 'reject']);
+Route::put('/examiner-reports/report-details/{id}/status', [LandController::class, 'updateStatus']);
 
+Route::get('/trigger-event', function() {
+    // Trigger the event with a message
+    broadcast(new EventCreated('This is a test notification!'));
+    
+    return 'Event broadcasted!';
+});
+Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
+Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
+
+Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
 use App\Http\Controllers\PaymentController;
 
 // Your routes/api.php
-//////////working 
+//////////working
 use App\Http\Controllers\VolunteerController;
 
 Route::middleware('auth:sanctum')->resource('volunteers', VolunteerController::class);
 Route::middleware('auth:sanctum')->post('/volunteer/request-examiner', [VolunteerController::class, 'requestExaminer']);
 Route::middleware('auth:sanctum')->get('/volunteer/check-examiner-request', [VolunteerController::class, 'checkExaminerRequest']);
 
- 
+
     // Create a payment and redirect to PayPal for approval
-   
+
 
 
     // Route::middleware('auth:sanctum')->group(function () {
     //     Route::post('/initiate-payment', [PaymentController::class, 'initiatePayment']);
     // });
-    
-    
+
+
 
 ////////////////////////
 
@@ -50,12 +67,25 @@ Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
 Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');
 
+Route::get('/posts/{id}', [PostController::class, 'show']);
 
 
 
 // Route::middleware(['auth:sanctum'])->group(function () {
 //     Route::apiResource('land-inspections', LandInspectionController::class);
 // });
+
+
+
+Route::delete('/examiner-reports/{id}', [LandInspectionController::class, 'destroy']);
+Route::get('/examiner-reports', [LandInspectionController::class, 'index']);
+Route::get('/examiner-reports/report-details/{id}', [LandInspectionController::class, 'show']);
+Route::apiResource('land-inspections', LandInspectionController::class);
+Route::apiResource('lands', LandController::class);
+Route::apiResource('posts', PostController::class);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::apiResource('land-inspections', LandInspectionController::class);
+});
 
 Route::put('/profile/{id}', [UserController::class, 'updateProfile']);
 
@@ -64,7 +94,7 @@ Route::get('/profile/{id}', [UserController::class, 'getProfile']);
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-use App\Http\Controllers\EventController;
+
 
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{id}', [EventController::class, 'show']);
@@ -117,9 +147,15 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 
 
 // Route::apiResource('auctions', AuctionController::class);
-Route::get('/auctions', [AuctionController::class, 'index']);
+Route::get('/auctions', [AuctionController::class, 'index']); // View all available auctions
+Route::get('/auctions/{id}', [AuctionController::class, 'show']); // View a single auction by ID
 
-
+// Protected routes (requires authentication using Sanctum)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/auctions/{id}/bid', [BidController::class, 'store']); // Place a bid on an auction
+    Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
+});
+Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
 
 ////
 
@@ -165,19 +201,19 @@ Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStat
 
 
 
-    Route::get('/users', [UserController::class, 'index']); 
-    Route::post('/users', [UserController::class, 'store']); 
-    Route::get('/users/{id}', [UserController::class,'show']); 
-    Route::put('/users/{id}', [UserController::class, 'update']); 
-    Route::delete('/users/{id}', [UserController::class, 'destroy']); 
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{id}', [UserController::class,'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 
 
 Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
 Route::get('/dashboard/events/{id}', [AdminController::class, 'eventDetails']);
 
-Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']); 
-Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']); 
+Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']);
+Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']);
 Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
 Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
@@ -209,7 +245,7 @@ Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
     $token = Str::random(60);
-    
+
     // Insert the token manually for testing
     DB::table('password_reset_tokens')->insert([
         'email' => $request->email,

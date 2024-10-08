@@ -14,7 +14,8 @@ use App\Models\Volunteer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-
+use App\Notifications\EventNotification;
+use App\Events\EventCreated;
 class AdminController extends Controller
 {
 
@@ -176,6 +177,11 @@ public function createEvent(Request $request)
     } else {
         return response()->json(['message' => 'Failed to create event'], 500);
     }
+    $users = User::all();  // You can also target specific users
+    foreach ($users as $user) {
+        $user->notify(new EventNotification());
+    }
+    broadcast(new EventCreated());
 }
 
 
