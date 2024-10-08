@@ -67,38 +67,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Auction;
+use App\Models\Bid;
+
 use App\Models\ItemDonation;
 use Illuminate\Http\Request;
 
 
 class AuctionController extends Controller
-{
-    public function index()
-    {
-        // Get all item donations with their associated data
-        $itemDonations = ItemDonation::with('donor')->get();
+{public function index() {
+    $auctions = Auction::with('itemDonation')
+                ->where('auction_status_id', 2) // 2 represents 'Ongoing'
+                ->where('end_date', '>', now()) // Only fetch auctions that haven't ended yet
+                ->get();
     
-        // Transform the data to include only the necessary fields
-        $auctions = $itemDonations->map(function ($item) {
-            return [
-                'id' => $item->id, // Assuming there's an ID in item donations
-                'imageUrl' => asset('storage/' . $item->image), // Use asset() to generate the correct URL
-                'title' => $item->item_name, // Assuming item_name corresponds to title
-                'currentPrice' => $item->value, // Assuming value corresponds to current price
-                'description' => $item->condition, // Adjust as necessary
-            ];
-        });
-    
-        return response()->json($auctions);  
-    }
-    
+    return response()->json($auctions);
+}
 
     
-  
-    public function create()
-    {
-        
-    }
+    
 
   
     public function store(Request $request)
@@ -107,51 +93,36 @@ class AuctionController extends Controller
         return response()->json($auction, 201);  
     }
 
-    // عرض عنصر محدد (show)
-    // public function show($id)
-    // {
-    //     $auction = Auction::findOrFail($id);
-    //     return response()->json($auction);
-    // }
  
-    public function show($id)
-{
-    // Find the item donation by ID
-    $itemDonation = ItemDonation::with('donor')->find($id);
+    public function show($id) {
+        $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
+        
+        // Count the number of bidders for the auction
+        $numberOfBidders = Bid::where('auction_id', $id)->count();
+        
+        // Correctly generate the image URL
+        $imageUrl = $auction->itemDonation->image 
+            ? asset('storage/item_images/' . $auction->itemDonation->image) 
+            : 'https://via.placeholder.com/150'; // Placeholder image URL
     
-    if (!$itemDonation) {
-        return response()->json(['message' => 'Item not found'], 404);
+        return response()->json([
+            'id' => $auction->id,
+            'title' => $auction->title,
+            'description' => $auction->description,
+            'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+            'start_date' => $auction->start_date,
+            'end_date' => $auction->end_date,
+            'number_of_bidders' => $numberOfBidders,
+            'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
+            'imageUrl' => $imageUrl, // Ensure this is set correctly
+        ]);
     }
-
-    // Retrieve auction data using the correct column name
-    $auction = Auction::where('item_id', $id)->first();
     
-    // Transform the data for the response
-    $auctionDetails = [
-        'id' => $itemDonation->id,
-        'imageUrl' => asset('storage/' . $itemDonation->image),
-        'title' => $itemDonation->item_name,
-        'description' => $itemDonation->condition,
-        'currentPrice' => $itemDonation->value,
-        'start_date' => $auction ? $auction->start_date : null,
-        'end_date' => $auction ? $auction->end_date : null,
-        'number_of_bidders' => $auction ? $auction->number_of_bidders : null,
-    ];
-
-    // Return the transformed data
-    return response()->json($auctionDetails);
-}
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
     
 
     // عرض نموذج تعديل عنصر محدد (edit)
@@ -176,4 +147,21 @@ class AuctionController extends Controller
         $auction->delete();
         return response()->json(null, 204); 
     }
+
+
+    public function completeAuction($id)
+    {
+        $auction = Auction::findOrFail($id);
+
+        // Check if the auction has ended
+        if (now()->greaterThan($auction->end_date)) {
+            $auction->update(['auction_status_id' => 3]); // Mark auction as completed
+            $itemDonation = ItemDonation::find($auction->item_id);
+            $itemDonation->update(['status_id' => 1]); // Mark the item as sold
+            return response()->json(['message' => 'Auction completed, item marked as sold.']);
+        }
+
+        return response()->json(['message' => 'Auction is still ongoing.'], 400);
+    }
+
 }
