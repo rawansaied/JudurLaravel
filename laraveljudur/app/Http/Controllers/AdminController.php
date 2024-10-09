@@ -200,7 +200,7 @@ public function eventDetails($id)
 
 public function eventForm()
 {
-    $Land = Land::all();
+    $Land = Land::where('status_id', 2)->get();
 
     return response()->json($Land);
 }
