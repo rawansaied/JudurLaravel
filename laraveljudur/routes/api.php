@@ -23,12 +23,7 @@ Route::put('/lands/{id}/accept', [LandController::class, 'accept']);
 Route::put('/lands/{id}/reject', [LandController::class, 'reject']);
 Route::put('/examiner-reports/report-details/{id}/status', [LandController::class, 'updateStatus']);
 
-Route::get('/trigger-event', function() {
-    // Trigger the event with a message
-    broadcast(new EventCreated('This is a test notification!'));
-    
-    return 'Event broadcasted!';
-});
+
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 

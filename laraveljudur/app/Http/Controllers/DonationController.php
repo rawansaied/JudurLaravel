@@ -290,7 +290,6 @@ public function createAuctionPayment(Request $request)
             'auction_id' => 'required|integer', 
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|string',
-            'auction_id' => 'required|integer',
             'payment_method' => 'required|string',
         ]);
 
