@@ -132,10 +132,13 @@ Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, '
 
 
 // Route to show the contact form
-Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
+// Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
 
 // Route to handle the form submission
-Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
+// Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
+
+Route::post('/contact', [ContactUsController::class, 'store']);
+
 
 // Route::post('/auction/{auctionId}/complete', [BidController::class, 'getAuctionWinnerAndStorePayment']);
 Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);

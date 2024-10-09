@@ -77,10 +77,11 @@ class DonationController extends Controller
             // Validate the input data
             $validatedData = $request->validate([
                 'item_name' => 'required|string',
-                'condition' => 'required|string', // Condition is required
+                'condition' => 'required|string',
                 'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Image is required
                 'is_valuable' => 'required|boolean',
-                'value' => $request->is_valuable ? 'required|numeric' : 'nullable|numeric' // Value is required if item is valuable
+                'value' => $request->is_valuable ? 'required|numeric' : 'nullable|numeric',
+                'quantity' => 'required|integer|min:1'  // Validate quantity
             ]);
     
             // Get the logged-in user ID
@@ -107,12 +108,15 @@ class DonationController extends Controller
                 $statusId = $status->id;
                 $value = $validatedData['value']; 
             } else {
-
+                // If not valuable, update the inventory
                 $inventory = Inventory::where('id', 1)->first();
+                if (!$inventory) {
+                    return response()->json(['error' => 'Inventory not found.'], 404);
+                }
                 $old_value = $inventory->items;
-                $new_value = $old_value + $request->quantity;
+                $new_value = $old_value + $validatedData['quantity']; // Use validated quantity
                 $inventory->update(['items' => $new_value]); 
-
+    
                 // If not valuable, set status to 'normal'
                 $status = \App\Models\ItemStatus::where('status', 'normal')->first();
                 if (!$status) {
@@ -122,6 +126,7 @@ class DonationController extends Controller
                 $value = 0.00; 
             }
     
+            // Create the item donation
             $itemDonation = ItemDonation::create([
                 'donor_id' => $donor->id,
                 'item_name' => $validatedData['item_name'],
