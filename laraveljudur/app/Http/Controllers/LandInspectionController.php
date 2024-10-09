@@ -111,7 +111,7 @@ class LandInspectionController extends Controller
 
     public function getLands()
     {
-        $acceptedStatus = LandStatus::where('name', 'accepted')->first();
+        $acceptedStatus = LandStatus::where('name', 'Pending')->first();
 
         if (!$acceptedStatus) {
             return response()->json(['error' => 'Accepted status not found.'], 500);

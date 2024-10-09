@@ -137,8 +137,10 @@ Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('c
 // Route to handle the form submission
 Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
 
-
-
+// Route::post('/auction/{auctionId}/complete', [BidController::class, 'getAuctionWinnerAndStorePayment']);
+Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
+Route::get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
+Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
 
 
 // Route::get('/auctions', [AuctionController::class, 'index']);
@@ -156,7 +158,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
 });
 Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
-
+Route::post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
+ 
 ////
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -237,10 +240,16 @@ Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
 
 Route::post('/donate', [DonationController::class, 'donate']);
 Route::post('/create-payment', [DonationController::class, 'createPayment']);
+Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
+
+
+
+
+
 Route::post('/login', [AuthController::class, 'login']);
 
 
-
+  
 
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;

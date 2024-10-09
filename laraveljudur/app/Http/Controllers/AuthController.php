@@ -119,7 +119,7 @@ class AuthController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role_id' => 3, // Role ID for Volunteer
+                'role_id' => 3, 
                 'age' => $validated['age'],
                 'phone' => $validated['phone'],
             ]);
@@ -160,15 +160,13 @@ class AuthController extends Controller
     
         Log::info('User logged in', ['user_id' => $user->id]);
     
-        // Check if the user is a volunteer and add the examiner status
         $volunteer = Volunteer::where('user_id', $user->id)->first();
-        $user->examiner = $volunteer ? $volunteer->examiner : 0; // Add examiner field to the user
-    
+        $user->examiner = $volunteer ? $volunteer->examiner : 0; 
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'message' => 'You are logged in',
-            'user' => $user, // User now includes 'examiner' field
+            'user' => $user, 
         ]);
     }
     
