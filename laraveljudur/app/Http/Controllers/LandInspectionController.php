@@ -111,16 +111,24 @@ class LandInspectionController extends Controller
 
     public function getLands()
     {
-        $acceptedStatus = LandStatus::where('name', 'Pending')->first();
-
-        if (!$acceptedStatus) {
-            return response()->json(['error' => 'Accepted status not found.'], 500);
+        // Find the status 'Pending'
+        $pendingStatus = LandStatus::where('name', 'Pending')->first();
+    
+        // Check if the 'Pending' status exists
+        if (!$pendingStatus) {
+            return response()->json(['error' => 'Pending status not found.'], 500);
         }
-
-        $lands = Land::where('status_id', $acceptedStatus->id)->get();
-
+    
+        // Get the current date
+        $currentDate = Carbon::now()->toDateString();
+    
+        // Retrieve lands that have 'Pending' status and availability_time in the future
+        $lands = Land::where('status_id', $pendingStatus->id)
+                    ->where('availability_time', '>', $currentDate)
+                    ->get();
+    
         return response()->json($lands);
-}
+    }
     /**
      * Remove the specified resource from storage.
      */
