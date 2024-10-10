@@ -148,7 +148,6 @@ class UserController extends Controller
 
         return response()->json($user);
     }
-
     public function update(Request $request, $id): JsonResponse
     {
         $request->validate([
@@ -159,23 +158,24 @@ class UserController extends Controller
             'age' => 'required|integer|min:0',
             'phone' => 'required|string|max:15',
         ]);
-
+    
         $user = User::findOrFail($id);
         $user->name = $request->name;
         $user->email = $request->email;
-
-        if ($request->password) {
+    
+        if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
-
+    
         $user->role_id = $request->role_id;
         $user->age = $request->age;
         $user->phone = $request->phone;
-
+    
         $user->save();
-
+    
         return response()->json(['message' => 'User updated successfully']);
     }
+    
 
     public function destroy($id): JsonResponse
     {

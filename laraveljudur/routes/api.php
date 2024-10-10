@@ -139,7 +139,7 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 
 // Route::post('/auction/{auctionId}/complete', [BidController::class, 'getAuctionWinnerAndStorePayment']);
 Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
-Route::get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
 
 
@@ -158,7 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
 });
 Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
-Route::post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
+Route::middleware('auth:sanctum')->post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
  
 ////
 
@@ -239,9 +239,10 @@ Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
 
 
 Route::post('/donate', [DonationController::class, 'donate']);
-Route::post('/create-payment', [DonationController::class, 'createPayment']);
-Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
-
+Route::middleware('auth:sanctum')->post('/create-payment', [DonationController::class, 'createPayment']);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
+});
 
 
 

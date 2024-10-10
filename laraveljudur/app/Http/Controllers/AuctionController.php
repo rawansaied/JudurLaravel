@@ -61,7 +61,7 @@ class AuctionController extends Controller
         
         $imageUrl = $auction->itemDonation->image 
         ? asset('storage/' . $auction->itemDonation->image) 
-        : 'https://via.placeholder.com/150'; // Placeholder image URL
+        : 'https://via.placeholder.com/150';
     
         return response()->json([
             'id' => $auction->id,
@@ -72,7 +72,7 @@ class AuctionController extends Controller
             'end_date' => $auction->end_date,
             'number_of_bidders' => $numberOfBidders,
             'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
-            'imageUrl' => $imageUrl, // Ensure this is set correctly
+            'imageUrl' => $imageUrl, 
         ]);
     }
     
@@ -110,11 +110,10 @@ class AuctionController extends Controller
     {
         $auction = Auction::findOrFail($id);
 
-        // Check if the auction has ended
         if (now()->greaterThan($auction->end_date)) {
-            $auction->update(['auction_status_id' => 3]); // Mark auction as completed
+            $auction->update(['auction_status_id' => 3]);
             $itemDonation = ItemDonation::find($auction->item_id);
-            $itemDonation->update(['status_id' => 1]); // Mark the item as sold
+            $itemDonation->update(['status_id' => 1]); 
             return response()->json(['message' => 'Auction completed, item marked as sold.']);
         }
 
@@ -122,35 +121,30 @@ class AuctionController extends Controller
     }
     public function getCompletedAuctions()
 {
-    // Get the currently authenticated user ID
     $userId = auth()->id();
 
-    // Get completed auctions where the auction has ended
     $completedAuctions = Auction::where('end_date', '<', now())
-        ->with(['bids', 'itemDonation']) // Include itemDonation relation
+        ->with(['bids', 'itemDonation']) 
         ->get();
 
     $auctionWinners = [];
 
     foreach ($completedAuctions as $auction) {
-        // Get the highest bid for the auction
         $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
 
-        // If there is a highest bid and the user is the highest bidder
         if ($highestBid && $highestBid->user_id == $userId) {
-            // Check if the image exists and create the correct URL
             $imageUrl = $auction->itemDonation->image
                 ? asset('storage/' . $auction->itemDonation->image)
-                : 'https://via.placeholder.com/150'; // Fallback placeholder image
+                : 'https://via.placeholder.com/150'; 
 
-            // Append the auction details to the response if the user is the highest bidder
             $auctionWinners[] = [
                 'auction_id' => $auction->id,
+                'auction_status_id'=>$auction->auction_status_id,
                 'auction_title' => $auction->title,
                 'auction_image' => $imageUrl,
                 'highest_bidder_id' => $highestBid->user_id,
                 'highest_bidder_name' => $highestBid->user->name,
-                'bid_amount' => $highestBid->bid_amount, // Store the highest bid amount
+                'bid_amount' => $highestBid->bid_amount, 
             ];
         }
     }
