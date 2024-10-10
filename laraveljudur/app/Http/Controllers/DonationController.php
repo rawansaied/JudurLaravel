@@ -235,4 +235,29 @@ class DonationController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
+    public function updateLandAvailability(Request $request, $landId)
+    {
+        $userId = auth()->id();
+        Log::info('Updating availability for land ID: ', ['landId' => $landId]);
+        Log::info('Authenticated user ID: ', ['userId' => $userId]);
+    
+        // Find the land by ID and check if it belongs to the authenticated donor
+        $land = Land::where('id', $landId)
+                    ->where('donor_id', Donor::where('user_id', $userId)->value('id'))
+                    ->first();
+    
+        if (!$land) {
+            Log::error('Land not found or does not belong to the donor.');
+            return response()->json(['error' => 'Land not found or does not belong to the donor.'], 404);
+        }
+    
+        // Update the availability date
+        $land->availability_time = Carbon::parse($request->input('availability_time'))->toDateString();
+        $land->save();
+    
+        return response()->json(['message' => 'Availability date updated successfully', 'land' => $land], 200);
+    }
+    
+    
 }
