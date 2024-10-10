@@ -19,6 +19,9 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
 use App\Events\EventCreated;
+use App\Http\Controllers\VolunteerController;
+Route::get('/volunteer-status/{user_id}', [VolunteerController::class, 'getVolunteerStatus']);
+
 Route::put('/lands/{id}/accept', [LandController::class, 'accept']);
 Route::put('/lands/{id}/reject', [LandController::class, 'reject']);
 Route::put('/examiner-reports/report-details/{id}/status', [LandController::class, 'updateStatus']);
@@ -37,7 +40,7 @@ use App\Http\Controllers\PaymentController;
 
 // Your routes/api.php
 //////////working
-use App\Http\Controllers\VolunteerController;
+
 
 Route::middleware('auth:sanctum')->resource('volunteers', VolunteerController::class);
 Route::middleware('auth:sanctum')->post('/volunteer/request-examiner', [VolunteerController::class, 'requestExaminer']);

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Carbon\Carbon;
 
 use App\Models\Auction;
 use App\Models\AuctionStatus;
@@ -210,11 +211,16 @@ public function eventDetails($id)
 
 public function eventForm()
 {
-    $Land = Land::all();
+    // Get the current date
+    $currentDate = Carbon::now()->toDateString();
 
-    return response()->json($Land);
+    // Fetch lands with status_id = 2 and availability_time in the future
+    $lands = Land::where('status_id', 2)
+                ->where('availability_time', '>', $currentDate)
+                ->get();
+
+    return response()->json($lands);
 }
-
 public function createEvent(Request $request)
 {
     Log::info('Create Event Called', ['request' => $request->all()]);

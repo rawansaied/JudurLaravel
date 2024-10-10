@@ -83,6 +83,15 @@ public function requestExaminer(Request $request)
 
     return response()->json(['error' => 'Pending status not found.'], 404);
 }
+public function getVolunteerStatus($user_id)
+{
+    $volunteer = Volunteer::where('user_id', $user_id)->first();
 
+    if ($volunteer) {
+        return response()->json(['status' => $volunteer->volunteer_status]);
+    } else {
+        return response()->json(['status' => null], 404);
+    }
+}
     
 }

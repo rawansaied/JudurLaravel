@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
 
 class VolunteerAnalyticsController extends Controller
 {
@@ -111,18 +112,19 @@ class VolunteerAnalyticsController extends Controller
     
         return response()->json($inspectionsWithStatusName);
     }
-
     public function getPendingLands()
     {
-        $pendingStatusId = 1;
+        $pendingStatusId = 1; // Assuming '1' is the ID for 'Pending' status
+        $currentDate = Carbon::now()->toDateString(); // Get the current date
     
-        $pendingLands = Land::with('donor.user') 
+        // Query to get pending lands with future availability
+        $pendingLands = Land::with('donor.user') // Assuming the relation 'donor' with 'user'
             ->where('status_id', $pendingStatusId)
+            ->where('availability_time', '>', $currentDate) // Only lands with future availability time
             ->get();
     
         return response()->json($pendingLands);
     }
-    
 
     public function notifyLandOwner(Request $request)
 {

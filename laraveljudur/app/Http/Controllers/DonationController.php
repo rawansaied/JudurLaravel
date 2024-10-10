@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Auction;
+use Carbon\Carbon;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +31,7 @@ class DonationController extends Controller
             'land_size' => 'required|numeric',
             'address' => 'required|string',
             'proof_of_ownership' => 'sometimes|file|mimes:jpg,png,pdf|max:2048',
+            'availability_time' => 'required|date', // Validate availability_time
         ]);
 
         if ($validator->fails()) {
@@ -36,20 +39,16 @@ class DonationController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Default proof of ownership
-        $defaultProofPath = 'default/ownership_proof.jpg';
-        $proofPath = $defaultProofPath;
+        // Default proof of ownership path
+        $proofPath = 'default/ownership_proof.jpg';
+        if ($request->hasFile('proof_of_ownership')) {
+            $proofPath = $request->file('proof_of_ownership')->store('ownership_proofs', 'public');
+        }
 
         // Check if there is a pending status in the land_statuses table
         $pendingStatus = LandStatus::where('name', 'pending')->first();
         if (!$pendingStatus) {
             return response()->json(['error' => 'Pending status not found. Please add it to the land_statuses table.'], 500);
-        }
-
-        // Default proof of ownership path
-        $proofPath = 'default/ownership_proof.jpg';
-        if ($request->hasFile('proof_of_ownership')) {
-            $proofPath = $request->file('proof_of_ownership')->store('ownership_proofs', 'public');
         }
 
         // Retrieve the donor
@@ -66,6 +65,7 @@ class DonationController extends Controller
             'address' => $request->input('address'),
             'proof_of_ownership' => $proofPath,
             'status_id' => $pendingStatus->id,  // Automatically set the status to 'pending'
+            'availability_time' => Carbon::parse($request->input('availability_time'))->toDateString(), // Store only the date
         ]);
 
         return response()->json(['message' => 'Land donated successfully', 'land' => $land], 201);
@@ -109,7 +109,6 @@ class DonationController extends Controller
                 $statusId = $status->id;
                 $value = $validatedData['value'];
             } else {
-
                 $inventory = Inventory::where('id', 1)->first();
                 $old_value = $inventory->items;
                 $new_value = $old_value + $request->quantity;
@@ -149,10 +148,7 @@ class DonationController extends Controller
 
 
 
-
-
-
-
+    
     public function donateMoney(Request $request)
     {
         // Log the incoming request data
@@ -170,16 +166,14 @@ class DonationController extends Controller
         }
 
         $userId = auth()->id();
-        Log::info('Authenticated User ID:', ['userId' => $userId]);  // Log the authenticated use
+        Log::info('Authenticated User ID:', ['userId' => $userId]); 
 
-        // Log the SQL queries
-        DB::enableQueryLog(); // Enable query logging
+        DB::enableQueryLog();
 
         $donor = Donor::where('user_id', $userId)->first();
-
-        // Log the executed query
+        
         Log::info('Executed query to find donor:', DB::getQueryLog());
-
+        
         if (!$donor) {
             return response()->json(['error' => 'Donor not found.'], 404);
         }

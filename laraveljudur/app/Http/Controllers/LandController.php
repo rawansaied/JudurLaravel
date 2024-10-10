@@ -15,6 +15,7 @@ class LandController extends Controller
     {
 
           $lands = Land::with('inspections')->get();
+       
     return response()->json($lands);
     }
 
@@ -115,4 +116,6 @@ class LandController extends Controller
     {
         //
     }
+   
+
 }

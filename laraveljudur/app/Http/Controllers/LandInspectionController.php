@@ -19,12 +19,17 @@ class LandInspectionController extends Controller
      */
     public function index()
     {
-
-        // Fetch reports with examiner details
-        $reports = LandInspection::with('examiner', 'land', 'land.status')->get();
-
+        $reports = LandInspection::with(['examiner', 'land', 'land.status'])
+            ->whereHas('land', function ($query) {
+                $query->where('status_id', 1);  
+            })
+            ->get();
+    
         return response()->json($reports);
     }
+    
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -111,16 +116,24 @@ class LandInspectionController extends Controller
 
     public function getLands()
     {
-        $acceptedStatus = LandStatus::where('name', 'Pending')->first();
-
-        if (!$acceptedStatus) {
-            return response()->json(['error' => 'Accepted status not found.'], 500);
+        // Find the status 'Pending'
+        $pendingStatus = LandStatus::where('name', 'Pending')->first();
+    
+        // Check if the 'Pending' status exists
+        if (!$pendingStatus) {
+            return response()->json(['error' => 'Pending status not found.'], 500);
         }
-
-        $lands = Land::where('status_id', $acceptedStatus->id)->get();
-
+    
+        // Get the current date
+        $currentDate = Carbon::now()->toDateString();
+    
+        // Retrieve lands that have 'Pending' status and availability_time in the future
+        $lands = Land::where('status_id', $pendingStatus->id)
+                    ->where('availability_time', '>', $currentDate)
+                    ->get();
+    
         return response()->json($lands);
-}
+    }
     /**
      * Remove the specified resource from storage.
      */
