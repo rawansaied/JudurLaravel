@@ -1,13 +1,15 @@
 <?php
 
 namespace App\Models;
-
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 
 class Land extends Model
+
 {
+  
     use HasFactory;
 
     protected $fillable = [
@@ -16,7 +18,8 @@ class Land extends Model
         'land_size',
         'address',
         'proof_of_ownership',
-        'status_id'
+        'status_id',
+        'availability_time',
     ];
 
     public function lands()
@@ -27,6 +30,7 @@ class Land extends Model
     {
         return $this->belongsTo(LandStatus::class, 'status_id');
     }
+
     public function volunteer()
     {
         return $this->belongsTo(Volunteer::class);

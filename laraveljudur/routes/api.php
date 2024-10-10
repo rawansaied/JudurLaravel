@@ -21,6 +21,20 @@ use App\Http\Controllers\BidController;
 use App\Http\Controllers\FeedbackController;
 
 Route::post('/api/create-payment', [PaymentController::class, 'createAuctionPayment']);
+use App\Events\EventCreated;
+use App\Http\Controllers\VolunteerController;
+Route::get('/volunteer-status/{user_id}', [VolunteerController::class, 'getVolunteerStatus']);
+
+Route::put('/lands/{id}/accept', [LandController::class, 'accept']);
+Route::put('/lands/{id}/reject', [LandController::class, 'reject']);
+Route::put('/examiner-reports/report-details/{id}/status', [LandController::class, 'updateStatus']);
+
+Route::get('/trigger-event', function() {
+    // Trigger the event with a message
+    broadcast(new EventCreated('This is a test notification!'));
+    
+    return 'Event broadcasted!';
+});
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
@@ -28,23 +42,23 @@ Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventContr
 use App\Http\Controllers\PaymentController;
 
 // Your routes/api.php
-//////////working 
-use App\Http\Controllers\VolunteerController;
+//////////working
+
 
 Route::middleware('auth:sanctum')->resource('volunteers', VolunteerController::class);
 Route::middleware('auth:sanctum')->post('/volunteer/request-examiner', [VolunteerController::class, 'requestExaminer']);
 Route::middleware('auth:sanctum')->get('/volunteer/check-examiner-request', [VolunteerController::class, 'checkExaminerRequest']);
 
- 
+
     // Create a payment and redirect to PayPal for approval
-   
+
 
 
     // Route::middleware('auth:sanctum')->group(function () {
     //     Route::post('/initiate-payment', [PaymentController::class, 'initiatePayment']);
     // });
-    
-    
+
+
 
 ////////////////////////
 
@@ -59,6 +73,7 @@ Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
 Route::post('/posts/{id}/comments', [PostController::class, 'storeComment'])->name('comments.store');
 
+Route::get('/posts/{id}', [PostController::class, 'show']);
 
 
 
@@ -128,8 +143,10 @@ Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('c
 // Route to handle the form submission
 Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
 
-
-
+// Route::post('/auction/{auctionId}/complete', [BidController::class, 'getAuctionWinnerAndStorePayment']);
+Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
+Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
 
 
 // Route::get('/auctions', [AuctionController::class, 'index']);
@@ -147,7 +164,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
 });
 Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
-
+Route::middleware('auth:sanctum')->post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
+ 
 ////
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -192,19 +210,20 @@ Route::put('/examiner/{id}/status', [AdminController::class, 'updateExaminerStat
 
 
 
-    Route::get('/users', [UserController::class, 'index']); 
-    Route::post('/users', [UserController::class, 'store']); 
-    Route::get('/users/{id}', [UserController::class,'show']); 
-    Route::put('/users/{id}', [UserController::class, 'update']); 
-    Route::delete('/users/{id}', [UserController::class, 'destroy']); 
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{id}', [UserController::class,'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 
 
 Route::get('/dashboard/events', [AdminController::class, 'getEvents']);
 Route::get('/dashboard/events/{id}', [AdminController::class, 'eventDetails']);
+Route::get('/dashboard/main/index', [AdminController::class, 'index']);
 
-Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']); 
-Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']); 
+Route::get('/dashboard/events/create/form', [AdminController::class, 'eventForm']);
+Route::post('/dashboard/events/create', [AdminController::class, 'createEvent']);
 Route::put('/dashboard/events/{id}', [AdminController::class, 'editEvent']);
 Route::delete('/dashboard/events/{id}', [AdminController::class, 'deleteEvent']);
 
@@ -213,18 +232,33 @@ Route::get('/dashboard/auctions/{id}', [AdminController::class, 'auctionDetails'
 Route::post('/dashboard/auctions', [AdminController::class, 'createAuction']);
 Route::get('/dashboard/statuses/auctions', [AdminController::class, 'getAuctionStatuses']);
 Route::get('/dashboard/items/auctions', [AdminController::class, 'getAuctionItems']);
+Route::get('/dashboard/allitems/auctions', [AdminController::class, 'getAllItems']);
+Route::get('/dashboard/valuableitems/itemDonation/{id}', [AdminController::class, 'getValuableItemDetails']);
+
 Route::put('/dashboard/auctions/{id}', [AdminController::class, 'editAuction']);
 Route::delete('/dashboard/auctions/{id}', [AdminController::class, 'deleteAuction']);
+Route::get('/pie-chart-data', [AdminController::class, 'getPieChartData']);
+Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
+
 // Dashboard Routes End
 
 
 
 Route::post('/donate', [DonationController::class, 'donate']);
-Route::post('/create-payment', [DonationController::class, 'createPayment']);
+Route::middleware('auth:sanctum')->post('/create-payment', [DonationController::class, 'createPayment']);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
+});
+
+
+
+
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->post('/feedback', [FeedbackController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/feedback', [FeedbackController::class, 'index']);
+
+  
 
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
@@ -236,7 +270,7 @@ Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
     $token = Str::random(60);
-    
+
     // Insert the token manually for testing
     DB::table('password_reset_tokens')->insert([
         'email' => $request->email,

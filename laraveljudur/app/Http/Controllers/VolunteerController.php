@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Examiner;
+use App\Models\ExaminerStatus;
 use App\Models\Volunteer;
 use App\Models\VolunteerStatus;
 use Illuminate\Http\Request;
@@ -30,48 +32,66 @@ class VolunteerController extends Controller
 }
 
 
-    public function requestExaminer(Request $request)
-    {
-        Log::info('RequestExaminer invoked', ['user_id' => Auth::id()]);
-    
-      
-        $volunteer = Volunteer::where('user_id', Auth::id())->first();
-    
-        if (!$volunteer) {
-            return response()->json(['error' => 'Volunteer not found.'], 404);
-        }
+public function requestExaminer(Request $request)
+{
+    Log::info('RequestExaminer invoked', ['user_id' => Auth::id()]);
 
-        $request->validate([
-            'fullName' => 'required|string|max:255',
-            'email' => 'required|email',
-            'reason' => 'required|string',
-            'availability' => 'required|string',
-            'hours' => 'required|integer|min:1',
-            'nonProfitAwareness' => 'required|boolean'
-        ]);
-    
-       
-        if ($volunteer->examiner_request_made) {
-            Log::info('Examiner request already made', ['user_id' => Auth::id()]);
-            return response()->json(['message' => 'You have already made a request to become an examiner.'], 400);
-        }
-    
+    // Find the currently logged-in volunteer
+    $volunteer = Volunteer::where('user_id', Auth::id())->first();
 
-        $pendingStatus = VolunteerStatus::where('name', 'pending')->first();
-    
-        if ($pendingStatus) {
-          
-            $volunteer->examiner_request_made = true;
-            $volunteer->volunteer_status = $pendingStatus->id; 
-            $volunteer->save();
-    
-            Log::info('Request submitted successfully', ['volunteer' => $volunteer]);
-    
-            return response()->json(['message' => 'Your request has been submitted successfully, pending admin approval.'], 200);
-        }
-    
-      
-        return response()->json(['error' => 'Pending status not found.'], 404);
+    if (!$volunteer) {
+        return response()->json(['error' => 'Volunteer not found.'], 404);
     }
+
+    // Validate the incoming request
+    $request->validate([
+        'fullName' => 'required|string|max:255',
+        'email' => 'required|email',
+        'reason' => 'required|string',
+        'availability' => 'required|string',
+        'hours' => 'required|integer|min:1',
+        'nonProfitAwareness' => 'required|boolean'
+    ]);
+
+    // Check if the volunteer has already made a request
+    if ($volunteer->examiner_request_made) {
+        Log::info('Examiner request already made', ['user_id' => Auth::id()]);
+        return response()->json(['message' => 'You have already made a request to become an examiner.'], 400);
+    }
+
+    // Get the pending examiner status
+    $pendingStatus = ExaminerStatus::where('name', 'pending')->first();
+
+    if ($pendingStatus) {
+        // Create a new examiner record
+        $examiner = new Examiner();
+        $examiner->user_id = $volunteer->user_id; // Assign the user_id from the volunteer
+        $examiner->education = $request->input('education', ''); // Use input from the request or set to an empty string
+        $examiner->reason = $request->input('reason'); // Use the reason from the request
+        $examiner->examiner_status = $pendingStatus->id; // Set the examiner status to pending
+        $examiner->save(); // Save the examiner record
+
+        // Update the volunteer record
+        $volunteer->examiner_request_made = true;
+        $volunteer->volunteer_status = $pendingStatus->id; // Assuming you want to change the volunteer status to pending
+        $volunteer->save();
+
+        Log::info('Request submitted successfully', ['examiner' => $examiner]);
+
+        return response()->json(['message' => 'Your request has been submitted successfully, pending admin approval.'], 200);
+    }
+
+    return response()->json(['error' => 'Pending status not found.'], 404);
+}
+public function getVolunteerStatus($user_id)
+{
+    $volunteer = Volunteer::where('user_id', $user_id)->first();
+
+    if ($volunteer) {
+        return response()->json(['status' => $volunteer->volunteer_status]);
+    } else {
+        return response()->json(['status' => null], 404);
+    }
+}
     
 }

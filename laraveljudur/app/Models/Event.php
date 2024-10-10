@@ -25,7 +25,9 @@ class Event extends Model
         'location',
         'duration',
         'people_helped',       
-        'goods_distributed',   
+        'goods_distributed',  
+        'allocatedMoney',
+        'allocatedItems',
     ];
 
     /**

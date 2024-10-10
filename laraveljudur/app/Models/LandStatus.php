@@ -16,7 +16,7 @@ class LandStatus extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'status',
+        'name',
     ];
 
     /**

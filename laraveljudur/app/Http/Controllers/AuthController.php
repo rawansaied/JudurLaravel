@@ -55,52 +55,67 @@ class AuthController extends Controller
     public function registerDonor(Request $request)
     {
         Log::info('Register Donor request received', $request->all());
-
+    
         $validated = $request->validate([
             'name' => 'required|string|min:2',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'age' => 'required|integer',
             'phone' => 'required|string',
+            'profile_picture' => 'nullable|string', 
         ]);
-
+    
         DB::beginTransaction();
         try {
             Log::info('Creating donor user', ['email' => $validated['email']]);
-            
+    
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role_id' => 2,
+                'role_id' => 2,  
                 'age' => $validated['age'],
                 'phone' => $validated['phone'],
             ]);
-
+    
+            if ($request->filled('profile_picture')) {
+                Log::info('Processing profile picture for user', ['user_id' => $user->id]);
+    
+                $imageData = base64_decode($validated['profile_picture']);
+    
+                $imageName = uniqid('profile_pictures/') . '.png';  
+    
+                Storage::disk('public')->put("{$imageName}", $imageData);
+    
+                $user->profile_picture = $imageName;
+                $user->save();
+            }
+    
             $donorIdNumber = uniqid('DONOR-');
             Log::info('Creating donor record', ['user_id' => $user->id]);
-
+    
             Donor::create([
                 'user_id' => $user->id,
                 'donor_id_number' => $donorIdNumber,
             ]);
-
+    
             DB::commit();
             Log::info('Donor registered successfully', ['user_id' => $user->id]);
-
+    
             return response()->json(['message' => 'Donor registered successfully', 'data' => $user], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error registering donor: ' . $e->getMessage());
+    
             return response()->json(['message' => 'Error registering donor'], 500);
         }
     }
+    
 
-    // Register a volunteer
     public function registerVolunteer(Request $request)
     {
         Log::info('Register Volunteer request received', $request->all());
-
+    
         $validated = $request->validate([
             'name' => 'required|string|min:2',
             'email' => 'required|email|unique:users,email',
@@ -110,36 +125,47 @@ class AuthController extends Controller
             'skills' => 'required|string',
             'availability' => 'required|string',
             'aim' => 'required|string',
+            'profilePicture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
+    
         try {
             Log::info('Creating volunteer user', ['email' => $validated['email']]);
-
+    
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role_id' => 3, // Role ID for Volunteer
+                'role_id' => 3,
                 'age' => $validated['age'],
                 'phone' => $validated['phone'],
+                'profile_picture' => $this->handleProfilePictureUpload($request), 
             ]);
-
-            Log::info('Creating volunteer record', ['user_id' => $user->id]);
-
+    
             Volunteer::create([
                 'user_id' => $user->id,
                 'skills' => $validated['skills'],
                 'availability' => $validated['availability'],
                 'aim' => $validated['aim'],
+                'volunteer_status'=> 1,
             ]);
-
+    
             Log::info('Volunteer registered successfully', ['user_id' => $user->id]);
-
+    
             return response()->json(['message' => 'Volunteer registered successfully', 'data' => $user], 201);
         } catch (\Exception $e) {
             Log::error('Error registering volunteer: ' . $e->getMessage());
             return response()->json(['message' => 'Error registering volunteer'], 500);
         }
+    }
+    
+    protected function handleProfilePictureUpload($request)
+    {
+        if ($request->hasFile('profilePicture')) {
+            $file = $request->file('profilePicture');
+            $path = $file->store('profile_pictures', 'public'); 
+            return $path; 
+        }
+        return null; 
     }
 
     // Log in a user
@@ -159,15 +185,13 @@ class AuthController extends Controller
     
         Log::info('User logged in', ['user_id' => $user->id]);
     
-        // Check if the user is a volunteer and add the examiner status
         $volunteer = Volunteer::where('user_id', $user->id)->first();
-        $user->examiner = $volunteer ? $volunteer->examiner : 0; // Add examiner field to the user
-    
+        $user->examiner = $volunteer ? $volunteer->examiner : 0; 
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'message' => 'You are logged in',
-            'user' => $user, // User now includes 'examiner' field
+            'user' => $user, 
         ]);
     }
     

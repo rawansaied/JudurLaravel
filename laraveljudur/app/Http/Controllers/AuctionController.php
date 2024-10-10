@@ -1,68 +1,5 @@
 <?php
 
-// namespace App\Http\Controllers;
-
-// use Illuminate\Http\Request;
-
-// class AuctionController extends Controller
-// {
-//     /**
-//      * Display a listing of the resource.
-//      */
-//     public function index()
-//     {
-//         //
-//     }
-
-//     /**
-//      * Show the form for creating a new resource.
-//      */
-//     public function create()
-//     {
-//         //
-//     }
-
-//     /**
-//      * Store a newly created resource in storage.
-//      */
-//     public function store(Request $request)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Display the specified resource.
-//      */
-//     public function show(string $id)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Show the form for editing the specified resource.
-//      */
-//     public function edit(string $id)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Update the specified resource in storage.
-//      */
-//     public function update(Request $request, string $id)
-//     {
-//         //
-//     }
-
-//     /**
-//      * Remove the specified resource from storage.
-//      */
-//     public function destroy(string $id)
-//     {
-//         //
-//     }
-// }
-
 
 namespace App\Http\Controllers;
 
@@ -75,12 +12,34 @@ use Illuminate\Http\Request;
 
 class AuctionController extends Controller
 {public function index() {
-    $auctions = Auction::with('itemDonation')
-                ->where('auction_status_id', 2) // 2 represents 'Ongoing'
-                ->where('end_date', '>', now()) // Only fetch auctions that haven't ended yet
-                ->get();
-    
-    return response()->json($auctions);
+    // Fetch ongoing auctions with related item donations
+    $auctions = Auction::with('itemDonation')->where('auction_status_id', 2) // Ongoing
+                        ->where('end_date', '>', now()) // Not yet ended
+                        ->get();
+
+    // Format the response
+    $formattedAuctions = $auctions->map(function ($auction) {
+        // Construct image URL
+        $imageUrl = $auction->itemDonation->image 
+            ? asset('storage/' . $auction->itemDonation->image) 
+            : 'https://via.placeholder.com/150'; // Placeholder image
+
+        return [
+            'id' => $auction->id,
+            'title' => $auction->title,
+            'description' => $auction->description,
+            'starting_price' => $auction->starting_price,
+            'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+            'start_date' => $auction->start_date,
+            'end_date' => $auction->end_date,
+            'item_name' => $auction->itemDonation->item_name,
+            'item_value' => $auction->itemDonation->value,
+            'item_condition' => $auction->itemDonation->condition,
+            'image_url' => $imageUrl,
+        ];
+    });
+
+    return response()->json($formattedAuctions);
 }
 
     
@@ -99,15 +58,9 @@ class AuctionController extends Controller
         $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
         
         
-        $numberOfBidders = Bid::where('auction_id', $id)->count();
-    
-    
-        $item = $auction->itemDonation;
-    
-        
-        $imageUrl = $item && $item->image 
-            ? asset('storage/item_images/' . $item->image) 
-            : 'https://via.placeholder.com/150'; 
+        $imageUrl = $auction->itemDonation->image 
+        ? asset('storage/' . $auction->itemDonation->image) 
+        : 'https://via.placeholder.com/150';
     
         return response()->json([
             'id' => $item ? $item->id : null,
@@ -118,7 +71,7 @@ class AuctionController extends Controller
             'end_date' => $auction->end_date,
             'number_of_bidders' => $numberOfBidders,
             'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
-            'imageUrl' => $imageUrl,
+            'imageUrl' => $imageUrl, 
         ]);
     }
     
@@ -154,9 +107,8 @@ class AuctionController extends Controller
     {
         $auction = Auction::findOrFail($id);
 
-   
         if (now()->greaterThan($auction->end_date)) {
-            $auction->update(['auction_status_id' => 3]); 
+            $auction->update(['auction_status_id' => 3]);
             $itemDonation = ItemDonation::find($auction->item_id);
             $itemDonation->update(['status_id' => 1]); 
             return response()->json(['message' => 'Auction completed, item marked as sold.']);
@@ -164,5 +116,60 @@ class AuctionController extends Controller
 
         return response()->json(['message' => 'Auction is still ongoing.'], 400);
     }
+    public function getCompletedAuctions()
+{
+    $userId = auth()->id();
+
+    $completedAuctions = Auction::where('end_date', '<', now())
+        ->with(['bids', 'itemDonation']) 
+        ->get();
+
+    $auctionWinners = [];
+
+    foreach ($completedAuctions as $auction) {
+        $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
+
+        if ($highestBid && $highestBid->user_id == $userId) {
+            $imageUrl = $auction->itemDonation->image
+                ? asset('storage/' . $auction->itemDonation->image)
+                : 'https://via.placeholder.com/150'; 
+
+            $auctionWinners[] = [
+                'auction_id' => $auction->id,
+                'auction_status_id'=>$auction->auction_status_id,
+                'auction_title' => $auction->title,
+                'auction_image' => $imageUrl,
+                'highest_bidder_id' => $highestBid->user_id,
+                'highest_bidder_name' => $highestBid->user->name,
+                'bid_amount' => $highestBid->bid_amount, 
+            ];
+        }
+    }
+
+    return response()->json($auctionWinners);
+}
+
+public function getHighestBid($id)
+    {
+        // Find the auction by ID
+        $auction = Auction::find($id);
+        
+        if (!$auction) {
+            return response()->json(['error' => 'Auction not found'], 404);
+        }
+
+        // Get the highest bid for the auction
+        $highestBid = Bid::where('auction_id', $id)
+            ->orderBy('amount', 'desc')
+            ->first();
+
+        if ($highestBid) {
+            return response()->json(['amount' => $highestBid->amount]);
+        } else {
+            return response()->json(['amount' => 0]); // No bids yet
+        }
+    }
+
+    
 
 }

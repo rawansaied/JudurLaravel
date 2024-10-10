@@ -23,11 +23,19 @@ class Auction extends Model
 
     public function itemDonation()
     {
-        return $this->belongsTo(ItemDonation::class, 'item_id'); // Ensure this matches your database
+        return $this->belongsTo(ItemDonation::class, 'item_id'); 
     }
 
     public function highestBidder()
     {
         return $this->belongsTo(User::class, 'highest_bidder_id');
+    } 
+    public function bids()
+    {
+        return $this->hasMany(Bid::class);
     }
+
+  
+
+
 }

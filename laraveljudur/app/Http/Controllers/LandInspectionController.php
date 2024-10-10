@@ -18,13 +18,18 @@ class LandInspectionController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {  
-     
-        // Fetch reports with examiner details
-        $reports = LandInspection::with('examiner', 'land')->get();
-
+    {
+        $reports = LandInspection::with(['examiner', 'land', 'land.status'])
+            ->whereHas('land', function ($query) {
+                $query->where('status_id', 1);  
+            })
+            ->get();
+    
         return response()->json($reports);
     }
+    
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -36,12 +41,16 @@ class LandInspectionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-  
+
     /**
      * Display the specified resource.
      */
     public function show($id) {
         $report = LandInspection::with('examiner', 'land', 'inspections')->findOrFail($id);
+        if ($report->photo_path) {
+            $report->photo_path = asset('storage/' . $report->photo_path);  // Returns full URL to image
+        }
+    
         return response()->json($report);
     }
     /**
@@ -81,12 +90,12 @@ class LandInspectionController extends Controller
             'date' => 'required|date',
             'hygiene' => 'required|string|max:255',
             'capacity' => 'required|integer',
-            'electricity_supply' => 'required|boolean', 
+            'electricity_supply' => 'required|boolean',
             'general_condition' => 'required|string|max:255',
             'photo' => 'nullable|file|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        
+
         $landInspection = LandInspection::create([
             'land_id' => $validated['land_id'],
             'date' => $validated['date'],
@@ -107,29 +116,37 @@ class LandInspectionController extends Controller
 
     public function getLands()
     {
-        $acceptedStatus = LandStatus::where('name', 'accepted')->first();
-
-        if (!$acceptedStatus) {
-            return response()->json(['error' => 'Accepted status not found.'], 500);
+        // Find the status 'Pending'
+        $pendingStatus = LandStatus::where('name', 'Pending')->first();
+    
+        // Check if the 'Pending' status exists
+        if (!$pendingStatus) {
+            return response()->json(['error' => 'Pending status not found.'], 500);
         }
-
-        $lands = Land::where('status_id', $acceptedStatus->id)->get();
-
+    
+        // Get the current date
+        $currentDate = Carbon::now()->toDateString();
+    
+        // Retrieve lands that have 'Pending' status and availability_time in the future
+        $lands = Land::where('status_id', $pendingStatus->id)
+                    ->where('availability_time', '>', $currentDate)
+                    ->get();
+    
         return response()->json($lands);
-}
+    }
     /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
     {
         $report = LandInspection::find($id);
-    
+
         if (!$report) {
             return response()->json(['message' => 'Report not found'], 404);
         }
-    
+
         // Optional: Handle any relationships if necessary, e.g. cascade delete
-    
+
         $report->delete();
         return response()->json(['message' => 'Report deleted successfully'], 200);
     }
