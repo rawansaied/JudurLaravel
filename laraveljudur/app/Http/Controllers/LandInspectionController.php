@@ -19,12 +19,17 @@ class LandInspectionController extends Controller
      */
     public function index()
     {
-
-        // Fetch reports with examiner details
-        $reports = LandInspection::with('examiner', 'land', 'land.status')->get();
-
+        $reports = LandInspection::with(['examiner', 'land', 'land.status'])
+            ->whereHas('land', function ($query) {
+                $query->where('status_id', 1);  
+            })
+            ->get();
+    
         return response()->json($reports);
     }
+    
+
+
     /**
      * Show the form for creating a new resource.
      */
