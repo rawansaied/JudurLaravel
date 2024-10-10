@@ -20,6 +20,13 @@ use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
 use App\Events\EventCreated;
 use App\Http\Controllers\VolunteerController;
+use App\Http\Controllers\CommentController;
+
+// Route to store a new comment
+Route::post('/comments', [CommentController::class, 'store']);
+// Route to get comments for a specific post
+Route::get('/posts/{post_id}/comments', [CommentController::class, 'getCommentsByPost']);
+
 Route::get('/volunteer-status/{user_id}', [VolunteerController::class, 'getVolunteerStatus']);
 
 Route::put('/lands/{id}/accept', [LandController::class, 'accept']);
@@ -29,7 +36,7 @@ Route::put('/examiner-reports/report-details/{id}/status', [LandController::clas
 Route::get('/trigger-event', function() {
     // Trigger the event with a message
     broadcast(new EventCreated('This is a test notification!'));
-    
+
     return 'Event broadcasted!';
 });
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
@@ -162,7 +169,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
 Route::middleware('auth:sanctum')->post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
- 
+
 ////
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -253,7 +260,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::post('/login', [AuthController::class, 'login']);
 
 
-  
+
 
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
