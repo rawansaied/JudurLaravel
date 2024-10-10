@@ -42,45 +42,13 @@ class AuctionController extends Controller
 
         return response()->json($formattedAuctions);
     }
-    public function getCompletedAuctions()
-    {
-        $userId = auth()->id();
-
-        // Get completed auctions
-        $completedAuctions = Auction::where('auction_status_id', 3) // Completed status
-            ->with(['bids', 'itemDonation']) // Include itemDonation relation
-            ->get();
-
-        $auctionWinners = [];
-
-        foreach ($completedAuctions as $auction) {
-            $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
-
-            if ($highestBid && $highestBid->user_id == $userId) {
-                $imageUrl = $auction->itemDonation->image
-                    ? asset('storage/' . $auction->itemDonation->image)
-                    : 'https://via.placeholder.com/150'; // Fallback placeholder image
-
-                $auctionWinners[] = [
-                    'auction_id' => $auction->id,
-                    'auction_title' => $auction->title,
-                    'auction_image' => $imageUrl,
-                    'highest_bidder_id' => $highestBid->user_id,
-                    'highest_bidder_name' => $highestBid->user->name,
-                    'bid_amount' => $highestBid->bid_amount, // Store the highest bid amount
-                ];
-            }
-        }
-
-        return response()->json($auctionWinners);
-    }
+    
 
     // Complete the auction and notify the highest bidder
     public function completeAuction($id)
     {
         $auction = Auction::findOrFail($id);
 
-        // Check if the auction has ended
         if (now()->greaterThan($auction->end_date)) {
             $auction->update(['auction_status_id' => 3]); // Mark as completed
             $itemDonation = ItemDonation::find($auction->item_id);
@@ -88,6 +56,19 @@ class AuctionController extends Controller
 
             // Get the highest bid for the auction
             $highestBid = Bid::where('auction_id', $id)->orderBy('bid_amount', 'desc')->first();
+
+            return response()->json(['message' => 'Auction completed, item marked as sold.']);
+        }
+
+        return response()->json(['message' => 'Auction is still ongoing.'], 400);
+    }
+    public function getCompletedAuctions()
+{
+    $userId = auth()->id();
+
+    $completedAuctions = Auction::where('end_date', '<', now())
+        ->with(['bids', 'itemDonation']) 
+        ->get();
 
             if ($highestBid) {
                 Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
@@ -99,10 +80,28 @@ class AuctionController extends Controller
             }
 
             return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
+    foreach ($completedAuctions as $auction) {
+        $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
+
+        if ($highestBid && $highestBid->user_id == $userId) {
+            $imageUrl = $auction->itemDonation->image
+                ? asset('storage/' . $auction->itemDonation->image)
+                : 'https://via.placeholder.com/150'; 
+
+            $auctionWinners[] = [
+                'auction_id' => $auction->id,
+                'auction_status_id'=>$auction->auction_status_id,
+                'auction_title' => $auction->title,
+                'auction_image' => $imageUrl,
+                'highest_bidder_id' => $highestBid->user_id,
+                'highest_bidder_name' => $highestBid->user->name,
+                'bid_amount' => $highestBid->bid_amount, 
+            ];
         }
 
         return response()->json(['message' => 'Auction is still ongoing'], 400);
     }
+}
 
     // Notify the highest bidder via email
     protected function notifyHighestBidder($auction, $highestBid)
@@ -132,3 +131,4 @@ class AuctionController extends Controller
         Log::info('Email sent successfully to: ' . $user->email);
     }
 }
+

@@ -18,6 +18,9 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
+use App\Http\Controllers\FeedbackController;
+
+Route::post('/api/create-payment', [PaymentController::class, 'createAuctionPayment']);
 use App\Events\EventCreated;
 use App\Http\Controllers\VolunteerController;
 use Symfony\Component\Mime\Part\TextPart;
@@ -157,6 +160,9 @@ Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])
 // Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
 // Route::get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 // Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
+Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
+Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
 
 
 // // Route::get('/auctions', [AuctionController::class, 'index']);
@@ -174,7 +180,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auctions/{id}/complete', [AuctionController::class, 'completeAuction']); // Complete an auction
 });
 Route::middleware('auth:sanctum')->post('/auctions/{auction_id}/bids', [BidController::class, 'placeBid']);
-Route::post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
+Route::middleware('auth:sanctum')->post('/confirm-auction-payment', [DonationController::class, 'confirmPayment']);
  
 ////
 
@@ -250,15 +256,18 @@ Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
 
 
 Route::post('/donate', [DonationController::class, 'donate']);
-Route::post('/create-payment', [DonationController::class, 'createPayment']);
-Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
-
+Route::middleware('auth:sanctum')->post('/create-payment', [DonationController::class, 'createPayment']);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
+});
 
 
 
 
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::middleware('auth:sanctum')->post('/feedback', [FeedbackController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/feedback', [FeedbackController::class, 'index']);
 
   
 
