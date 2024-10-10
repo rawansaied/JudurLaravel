@@ -1,126 +1,154 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\Bid;
 use App\Models\Auction;
+use App\Models\Bid;
+use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-class BidController extends Controller
+class BidsController extends Controller
 {
-//     public function store(Request $request, $auctionId)
-// {
-//     // Ensure the user is logged in
-//     if (!auth()->check()) {
-//         return response()->json(['message' => 'You must be logged in to place a bid.'], 401);
-//     }
-
-//     $userId = auth()->id();
-//     $auction = Auction::findOrFail($auctionId);
-
-//     // Check if the auction has ended
-//     if (now()->greaterThan($auction->end_date)) {
-//         return response()->json(['message' => 'The auction has ended.'], 400);
-//     }
-
-//     // Get the highest bid for the auction or fall back to the starting price if no bids exist
-//     $currentHighestBid = Bid::where('auction_id', $auctionId)
-//                             ->max('bid_amount') ?? $auction->starting_price;
-
-//     // Ensure that the new bid is higher than the current highest bid or starting price
-//     $newBidAmount = $request->input('bid_amount');
-//     if ($newBidAmount <= $currentHighestBid) {
-//         return response()->json(['message' => 'Your bid must be higher than the current highest bid or starting price.'], 400);
-//     }
-
-//     // Create the new bid
-//     $bid = Bid::create([
-//         'auction_id' => $auctionId,
-//         'user_id' => $userId,
-//         'bid_amount' => $newBidAmount,
-//     ]);
-
-//     // Update the current highest bid and highest bidder for the auction
-//     $auction->update([
-//         'current_highest_bid' => $newBidAmount,
-//         'highest_bidder_id' => $userId,
-//     ]);
-
-//     return response()->json(['message' => 'Bid placed successfully', 'bid' => $bid]);
-// }
-public function store(Request $request, $auctionId)
-{
-    $auction = Auction::findOrFail($auctionId);
-
-    // Validate bid amount
-    $request->validate([
-        'bid_amount' => 'required|numeric|min:' . ($auction->current_highest_bid + 1), // Ensure the bid is higher than current highest bid
-    ]);
-
-    // Create the bid
-    $bid = new Bid();
-    $bid->auction_id = $auctionId;
-    $bid->user_id = auth()->id(); // Get the authenticated user's ID
-    $bid->bid_amount = $request->input('bid_amount');
-    $bid->save();
-
-    // Update auction's highest bid and bidder
-    $auction->current_highest_bid = $bid->bid_amount;
-    $auction->highest_bidder_id = $bid->user_id;
-    $auction->save();
-
-    return response()->json(['message' => 'Bid placed successfully']);
-}
-public function placeBid(Request $request, $auctionId) {
-    if (!auth()->check()) {
-        return response()->json(['message' => 'You must be logged in to place a bid.'], 401);
-    }
-
-    $auction = Auction::findOrFail($auctionId);
     
-    // Ensure the auction is ongoing
-    if ($auction->auction_status_id != 2 || now()->greaterThan($auction->end_date)) {
-        return response()->json(['message' => 'Auction is no longer available for bidding.'], 400);
+    public function store(Request $request, $auctionId)
+    {
+        $auction = Auction::findOrFail($auctionId);
+
+        $request->validate([
+            'bid_amount' => 'required|numeric|min:' . ($auction->current_highest_bid + 1),
+        ]);
+
+        $bid = new Bid();
+        $bid->auction_id = $auctionId;
+        $bid->user_id = Auth::id();
+        $bid->bid_amount = $request->input('bid_amount');
+        $bid->save();
+
+        $auction->current_highest_bid = $bid->bid_amount;
+        $auction->highest_bidder_id = $bid->user_id;
+        $auction->save();
+
+        return response()->json(['message' => 'Bid placed successfully']);
     }
 
-    // Validate bid amount
-    $bidAmount = $request->input('bid_amount');
-    if ($bidAmount <= $auction->current_highest_bid) {
-        return response()->json(['message' => 'Bid must be higher than current highest bid.'], 400);
+ 
+    public function placeBid(Request $request, $auctionId)
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => 'You must be logged in to place a bid.'], 401);
+        }
+
+        $auction = Auction::findOrFail($auctionId);
+
+        if ($auction->auction_status_id != 2 || now()->greaterThan($auction->end_date)) {
+            return response()->json(['message' => 'Auction is no longer available for bidding.'], 400);
+        }
+
+        $bidAmount = $request->input('bid_amount');
+        if ($bidAmount <= $auction->current_highest_bid) {
+            return response()->json(['message' => 'Bid must be higher than current highest bid.'], 400);
+        }
+
+        $bid = new Bid([
+            'auction_id' => $auction->id,
+            'user_id' => Auth::id(),
+            'bid_amount' => $bidAmount,
+        ]);
+        $bid->save();
+
+        $auction->update([
+            'current_highest_bid' => $bidAmount,
+            'highest_bidder_id' => Auth::id(),
+        ]);
+
+        return response()->json(['message' => 'Bid placed successfully']);
     }
 
-    // Save the bid
-    $bid = new Bid([
-        'auction_id' => $auction->id,
-        'user_id' => auth()->id(), // This should correctly retrieve the user ID
-        'bid_amount' => $bidAmount,
-    ]);
-    $bid->save();
+    public function completeAuction($id)
+    {
+        $auction = Auction::findOrFail($id);
 
-    // Update the auction's highest bid
-    $auction->update([
-        'current_highest_bid' => $bidAmount,
-        'highest_bidder_id' => auth()->id(),
-    ]);
+        if (now()->greaterThan($auction->end_date)) {
+            $payment = Payment::where('user_id', $auction->highest_bidder_id)
+                              ->where('auction_id', $id)
+                              ->first();
 
-    return response()->json(['message' => 'Bid placed successfully']);
-}
+            if (!$payment || $payment->status !== 'paid') {
+                $secondHighestBid = Bid::where('auction_id', $id)
+                                       ->where('user_id', '!=', $auction->highest_bidder_id)
+                                       ->orderByDesc('bid_amount')
+                                       ->first();
 
+                if ($secondHighestBid) {
+                    $auction->highest_bidder_id = $secondHighestBid->user_id;
+                    $auction->current_highest_bid = $secondHighestBid->bid_amount;
+                    $auction->save();
+                }
+            }
 
-public function completeAuction($id) {
-    $auction = Auction::findOrFail($id);
+            $auction->update(['auction_status_id' => 3]);
+            return response()->json(['message' => 'Auction completed']);
+        }
+
+        return response()->json(['message' => 'Auction is still ongoing'], 400);
+    }
+
     
-    // Check if auction has ended
-    if (now()->greaterThan($auction->end_date)) {
-        // Mark auction as completed
-        $auction->update(['auction_status_id' => 3]);
-        
-        // If the highest bidder fails to pay, move to the second highest bid (logic not implemented yet)
-        
-        return response()->json(['message' => 'Auction completed']);
+    public function donateMoney(Request $request)
+    {
+        Log::info('Incoming donation request:', $request->all());
+
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:1',
+            'currency' => 'required|string',
+            'payment_method' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Validation errors:', $validator->errors()->toArray());
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $userId = Auth::id();
+        Log::info('Authenticated User ID:', ['userId' => $userId]);
+
+        $donor = Donor::where('user_id', $userId)->first();
+
+        if (!$donor) {
+            return response()->json(['error' => 'Donor not found.'], 404);
+        }
+
+        $financial = Financial::create([
+            'donor_id' => $donor->id,
+            'amount' => $request->amount,
+            'currency' => $request->currency,
+            'payment_method' => $request->payment_method,
+        ]);
+
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            $paymentIntent = PaymentIntent::create([
+                'amount' => $request->amount * 100,
+                'currency' => $request->currency,
+                'payment_method_types' => ['card'],
+            ]);
+
+            Payment::create([
+                'stripe_payment_id' => $paymentIntent->id,
+                'user_id' => $userId,
+                'amount' => $request->amount,
+                'currency' => $request->currency,
+                'status' => $paymentIntent->status,
+            ]);
+
+            return response()->json(['message' => 'Money donated successfully', 'financial' => $financial, 'paymentIntent' => $paymentIntent], 201);
+        } catch (\Exception $e) {
+            Log::error('Payment error:', ['message' => $e->getMessage()]);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-
-    return response()->json(['message' => 'Auction is still ongoing'], 400);
-}
-
-
 }

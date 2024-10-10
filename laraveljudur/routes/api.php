@@ -18,6 +18,9 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
+use App\Http\Controllers\FeedbackController;
+
+Route::post('/api/create-payment', [PaymentController::class, 'createAuctionPayment']);
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
@@ -220,8 +223,8 @@ Route::post('/donate', [DonationController::class, 'donate']);
 Route::post('/create-payment', [DonationController::class, 'createPayment']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
-
+Route::middleware('auth:sanctum')->post('/feedback', [FeedbackController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/feedback', [FeedbackController::class, 'index']);
 
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;

@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Feedback extends Model
 {
     use HasFactory;
+    protected $table = 'feedback';
 
-    protected $fillable = ['event_id', 'user', 'text', 'date']; // Define the fillable fields
+    protected $fillable = ['user_id', 'feedback'];
 
-    public function event()
+
+    public function user()
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(User::class);
     }
 }
