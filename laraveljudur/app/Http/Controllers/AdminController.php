@@ -176,25 +176,25 @@ public function examinerDetails($id)
     return response()->json($examiner);
 }
 
-public function updateExaminerStatus(Request $request, $id)
-{
-    $examiner = Examiner::findOrFail($id);
+// public function updateExaminerStatus(Request $request, $id)
+// {
+//     $examiner = Examiner::findOrFail($id);
     
-    $examiner->examiner_status = $request->input('status');
+//     $examiner->examiner_status = $request->input('status');
 
-    if ($examiner->save()) {
-        $volunteer = Volunteer::where('user_id', $examiner->user_id)->first(); // Assuming examiner has a user_id
+//     if ($examiner->save()) {
+//         $volunteer = Volunteer::where('user_id', $examiner->user_id)->first(); // Assuming examiner has a user_id
 
-        if ($volunteer) {
-            $volunteer->examiner = 1; 
-            $volunteer->save(); 
-        }
+//         if ($volunteer) {
+//             $volunteer->examiner = 1; 
+//             $volunteer->save(); 
+//         }
 
-        return response()->json(['success' => true]);
-    } else {
-        return response()->json(['success' => false], 500);
-    }
-}
+//         return response()->json(['success' => true]);
+//     } else {
+//         return response()->json(['success' => false], 500);
+//     }
+// }
 
 
 public function getEvents()
@@ -570,6 +570,85 @@ protected function sendStatusEmail($volunteer, $status)
         Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
     }
 }
+public function updateExaminerStatus(Request $request, $id)
+{
+    // Find the examiner or fail with a 404 error
+    $examiner = Examiner::findOrFail($id);
 
+    // Get the new status from the request
+    $newStatus = $request->input('status');
+    $examiner->examiner_status = $newStatus;
+    Log::info('Updating examiner status to: ' . $newStatus );
+    // Attempt to save the examiner status
+    if ($examiner->save()) {
+        // Get the associated volunteer
+        $volunteer = Volunteer::where('user_id', $examiner->user_id)->first(); // Assuming examiner has a user_id
+
+        if ($volunteer) {
+            $volunteer->examiner = 1; // Set the examiner flag for the volunteer
+            $volunteer->save(); // Save changes to the volunteer
+        }
+
+        // Send an email based on the new status
+        if ($newStatus == 2) { // Assuming 'accepted' is the string representation of the status
+            $this->sendStatusEmail2($volunteer, 'accepted');
+        } elseif ($newStatus == 3) { // Assuming 'rejected' is the string representation of the status
+            $this->sendStatusEmail2($volunteer, 'rejected');
+        }
+
+        return response()->json(['success' => true]);
+    } else {
+        return response()->json(['success' => false], 500);
+    }
+}
+
+// Helper function to send the status email
+protected function sendStatusEmail2($volunteer, $status)
+{
+    $user = $volunteer->user; // Get the user associated with the volunteer
+    Log::info('Entering sendStatusEmail for volunteer ID: ' . $volunteer->id . ' with status: ' . $status);
+    
+    // Ensure the user and email are valid
+    if (!$user) {
+        Log::error('User not found for volunteer ID: ' . $volunteer->id);
+        return;
+    }
+
+    if (empty($user->email)) {
+        Log::error('Email is null for user: ' . $user->name . ' with volunteer ID: ' . $volunteer->id);
+        return;
+    }
+
+    Log::info('Preparing to send email to: ' . $user->email);
+    
+    // Prepare email subject and content based on the status
+    $emailSubject = '';
+ 
+    $message = '';
+
+    if ($status == 'accepted') {
+        $emailSubject = 'Congratulations! You have been accepted as an examiner';
+  
+        $message = 'We are pleased to inform you that you have been <strong>accepted</strong> as an examiner!';
+    } elseif ($status == 'rejected') {
+        $emailSubject = 'We regret to inform you that you have been rejected as an examiner';
+      
+        $message = 'We regret to inform you that your application to be an examiner has been <strong>rejected</strong>. Thank you for your interest.';
+    }
+
+    try {
+        Log::info('Sending email to: ' . $user->email);
+        
+        Mail::html($message, function ($message) use ($user, $emailSubject) {
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                ->to($user->email) // Ensure the correct email is being passed
+                ->subject($emailSubject);
+        });
+    
+        Log::info('Email sent successfully to: ' . $user->email);
+    } catch (\Exception $e) {
+        Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
+    }
+}
 
 }

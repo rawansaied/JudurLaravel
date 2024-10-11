@@ -21,6 +21,8 @@ class Donor extends Model
     {
         return $this->belongsTo(User::class);
     }
+ 
+
 
     // Relationship to Financial Donations
     public function financialDonations()
@@ -67,5 +69,6 @@ class Donor extends Model
     {
         return $this->hasMany(Land::class, 'donor_id'); 
     }
+    
 
 }

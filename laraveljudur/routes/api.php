@@ -375,6 +375,31 @@ Route::post('/reset-password', function (Request $request) {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Route::middleware('auth:sanctum')->get('/notifications', [VolunteerAnalyticsController::class, 'getNotifications']);
+
 // Auction routes
 
 
