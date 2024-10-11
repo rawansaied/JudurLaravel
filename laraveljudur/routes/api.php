@@ -406,7 +406,7 @@ Route::middleware('auth:sanctum')->get('/notifications', [VolunteerAnalyticsCont
 // Auction routes
 Route::get('/auctions', [AuctionController::class, 'index']); // Get all ongoing auctions
 Route::get('/auctions/{id}', [AuctionController::class, 'show']); // Show details of a specific auction
-Route::get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']); // View all completed auctions
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']); // Get the highest bid for a specific auction
 
 // Bid routes

@@ -15,6 +15,7 @@ class AuctionStatusSeeder extends Seeder
             ['name' => 'Ongoing'],
             ['name' => 'Completed'],
             ['name' => 'Cancelled'],
+            ['name' => 'Paid'],
         ];
 
         foreach ($statuses as $status) {

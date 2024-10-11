@@ -153,5 +153,52 @@ class AuctionController extends Controller
         return response()->json(['message' => 'Auction or highest bid not found'], 404);
 }
 
+public function getCompletedAuctions()
+{
+    // Check if the user is authenticated
+    $userId = auth()->id();
+    if (!$userId) {
+        return response()->json(['error' => 'User not authenticated'], 401);
+    }
+
+    // Get completed auctions where the auction has ended
+    $completedAuctions = Auction::where('end_date', '<', now())
+        ->with(['bids', 'itemDonation'])
+        ->get();
+
+    $auctionWinners = [];
+
+    foreach ($completedAuctions as $auction) {
+        // Get the highest bid for the auction
+        $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
+
+        // If there is a highest bid and the user is the highest bidder
+        if ($highestBid && $highestBid->user_id == $userId) {
+            // Check if the itemDonation exists before accessing its image
+            $imageUrl = $auction->itemDonation 
+                ? asset('storage/' . $auction->itemDonation->image)
+                : 'https://via.placeholder.com/150'; // Fallback placeholder image
+
+            // Append the auction details to the response
+            $auctionWinners[] = [
+                'auction_id' => $auction->id,
+                'auction_title' => $auction->title,
+                'auction_image' => $imageUrl,
+                'highest_bidder_id' => $highestBid->user_id,
+                'highest_bidder_name' => $highestBid->user->name,
+                'bid_amount' => $highestBid->bid_amount,
+            ];
+        }
+    }
+
+    // Check if there are any winners
+    if (empty($auctionWinners)) {
+        return response()->json(['message' => 'No completed auctions found for the user.'], 404);
+    }
+
+    return response()->json($auctionWinners);
+}
+
+
 
 }
