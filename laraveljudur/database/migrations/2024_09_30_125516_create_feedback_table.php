@@ -8,15 +8,13 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('feedbacks', function (Blueprint $table) {
+        Schema::create('feedback', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('event_id');
-            $table->string('user');
-            $table->text('text');
-            $table->date('date');
+            $table->unsignedBigInteger('user_id');
+            $table->text('feedback');
             $table->timestamps();
 
-            $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

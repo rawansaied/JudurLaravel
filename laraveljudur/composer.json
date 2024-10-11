@@ -8,7 +8,7 @@
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.322",
         "guzzlehttp/guzzle": "^7.9",
-        "laravel/cashier": "^15.4",
+        "laravel/cashier": "*",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
