@@ -20,7 +20,7 @@ use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
 use App\Http\Controllers\FeedbackController;
 
-Route::post('/api/create-payment', [PaymentController::class, 'createAuctionPayment']);
+Route::post('/create-payment', [DonationController::class, 'createAuctionPayment']);
 use App\Events\EventCreated;
 use App\Http\Controllers\VolunteerController;
 use Symfony\Component\Mime\Part\TextPart;
@@ -148,10 +148,7 @@ Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, '
 
 
 
-
-
-// Route to show the contact form
-Route::get('/contact', [ContactUsController::class, 'showContactForm'])->name('contact.form');
+Route::post('/contact', [ContactUsController::class, 'store']);
 
 // Route to handle the form submission
 Route::post('/contact/send', [ContactUsController::class, 'sendContactMessage'])->name('contact.send');
@@ -256,7 +253,7 @@ Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
 
 
 Route::post('/donate', [DonationController::class, 'donate']);
-Route::middleware('auth:sanctum')->post('/create-payment', [DonationController::class, 'createPayment']);
+Route::post('/create-payment', [DonationController::class, 'createPayment']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
 });
@@ -356,4 +353,4 @@ Route::get('/auction/{auctionId}/winner', [AuctionController::class, 'getAuction
 
 
 
-
+Route::get('/email', [AuctionController::class, 'Email']);

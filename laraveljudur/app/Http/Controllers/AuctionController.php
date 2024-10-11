@@ -42,7 +42,28 @@ class AuctionController extends Controller
 
         return response()->json($formattedAuctions);
     }
+    public function show($id) {
+        $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
+        
+        // Count the number of bidders for the auction
+        $numberOfBidders = Bid::where('auction_id', $id)->count();
+        
+        $imageUrl = $auction->itemDonation->image 
+        ? asset('storage/' . $auction->itemDonation->image) 
+        : 'https://via.placeholder.com/150';
     
+        return response()->json([
+            'id' => $auction->id,
+            'title' => $auction->title,
+            'description' => $auction->description,
+            'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+            'start_date' => $auction->start_date,
+            'end_date' => $auction->end_date,
+            'number_of_bidders' => $numberOfBidders,
+            'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
+            'imageUrl' => $imageUrl, 
+        ]);
+    }
 
     // Complete the auction and notify the highest bidder
     public function completeAuction($id)
@@ -63,45 +84,60 @@ class AuctionController extends Controller
         return response()->json(['message' => 'Auction is still ongoing.'], 400);
     }
     public function getCompletedAuctions()
-{
-    $userId = auth()->id();
-
-    $completedAuctions = Auction::where('end_date', '<', now())
-        ->with(['bids', 'itemDonation']) 
-        ->get();
-
-            if ($highestBid) {
-                Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
-
-                // Notify highest bidder via email
-                $this->notifyHighestBidder($auction, $highestBid);
-            } else {
-                Log::info('No highest bidder found for auction', ['auction_id' => $id]);
+    {
+        $userId = auth()->id();
+    
+        $completedAuctions = Auction::where('end_date', '<', now())
+            ->with(['bids', 'itemDonation']) 
+            ->get();
+    
+                if ($highestBid) {
+                    Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
+    
+                    // Notify highest bidder via email
+                    $this->notifyHighestBidder($auction, $highestBid);
+                } else {
+                    Log::info('No highest bidder found for auction', ['auction_id' => $id]);
+                }
+    
+                return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
+        foreach ($completedAuctions as $auction) {
+            $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
+    
+            if ($highestBid && $highestBid->user_id == $userId) {
+                $imageUrl = $auction->itemDonation->image
+                    ? asset('storage/' . $auction->itemDonation->image)
+                    : 'https://via.placeholder.com/150'; 
+    
+                $auctionWinners[] = [
+                    'auction_id' => $auction->id,
+                    'auction_status_id'=>$auction->auction_status_id,
+                    'auction_title' => $auction->title,
+                    'auction_image' => $imageUrl,
+                    'highest_bidder_id' => $highestBid->user_id,
+                    'highest_bidder_name' => $highestBid->user->name,
+                    'bid_amount' => $highestBid->bid_amount, 
+                ];
             }
+    
+            return response()->json(['message' => 'Auction is still ongoing'], 400);
+        }
+    }
 
-            return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
-    foreach ($completedAuctions as $auction) {
-        $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
+    public function Email()
+    {
+        // Simulate an auction and highest bid for testing
+        $auction = Auction::find(1); // Replace with an actual auction ID from your database
+        $highestBid = Bid::where('auction_id', 1)->orderBy('bid_amount', 'desc')->first(); // Replace with the corresponding bid ID
 
-        if ($highestBid && $highestBid->user_id == $userId) {
-            $imageUrl = $auction->itemDonation->image
-                ? asset('storage/' . $auction->itemDonation->image)
-                : 'https://via.placeholder.com/150'; 
+        if ($auction && $highestBid) {
+            $this->notifyHighestBidder($auction, $highestBid);
 
-            $auctionWinners[] = [
-                'auction_id' => $auction->id,
-                'auction_status_id'=>$auction->auction_status_id,
-                'auction_title' => $auction->title,
-                'auction_image' => $imageUrl,
-                'highest_bidder_id' => $highestBid->user_id,
-                'highest_bidder_name' => $highestBid->user->name,
-                'bid_amount' => $highestBid->bid_amount, 
-            ];
+            return response()->json(['message' => 'Test email sent successfully']);
         }
 
-        return response()->json(['message' => 'Auction is still ongoing'], 400);
+        return response()->json(['message' => 'Auction or highest bid not found'], 404);
     }
-}
 
     // Notify the highest bidder via email
     protected function notifyHighestBidder($auction, $highestBid)
@@ -113,7 +149,7 @@ class AuctionController extends Controller
         $emailContent = [
             'auctionTitle' => $auction->title,
             'bidAmount' => $highestBid->bid_amount,
-            'paymentLink' => 'http://your-angular-app.com/payment?auctionId=' . $auction->id,
+            'paymentLink' => 'http://localhost:4200/auction-payment' . $auction->id,
         ];
 
         // Prepare the HTML content for the email
@@ -121,7 +157,7 @@ class AuctionController extends Controller
             . 'Your bid: $' . $emailContent['bidAmount'] . ' '
             . '<a href="' . $emailContent['paymentLink'] . '">Click here to make the payment</a>';
 
-        // Send the email using Mail::send()
+        // Send the email using Mail::raw()
         Mail::raw($htmlContent, function ($message) use ($user) {
             $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
                 ->to($user->email)

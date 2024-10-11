@@ -11,56 +11,39 @@ use App\Models\Contact;
 
 class ContactUsController extends Controller
 {
-    public function showContactForm()
+    public function store(Request $request)
     {
-        return view('contact');
-    }
-
-    public function sendContactMessage(Request $request)
-    {
-        // Validate incoming request data
-        $validatedData = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
+            'email' => 'required|email',
             'message' => 'required|string',
         ]);
 
-        try {
-            // Log the attempt to send an email
-            Log::info('Attempting to send contact email.', [
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-            ]);
-            Contact::create([
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-                'message' => $validatedData['message'],
-            ]);
+        $contact = new Contact();
+        $contact->name = $request->name;
+        $contact->email = $request->email;
+        $contact->message = $request->message;
+        $contact->save();
 
-            // Create and send the email
-            Mail::to('shroukeslam909@gmail.com')->send(new ContactUsMail(
-                $validatedData['name'],
-                $validatedData['email'],
-                $validatedData['message']
-            ));
+        $messageContent = "Name: " . $request->name . "\n"
+                        . "Email: " . $request->email . "\n"
+                        . "Message: " . $request->message;
 
-            Log::info('Contact email sent successfully.', [
-                'email' => $validatedData['email'],
-            ]);
+        Mail::raw($messageContent, function ($message) use ($request) {
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
+            $message->to(env('MAIL_FROM_ADDRESS'))->subject('Contact Us Message');
+        });
 
-            return response()->json(['message' => 'Email sent successfully!'], 200);
-        } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            Log::error('Failed to send contact email.', [
-                'error' => $e->getMessage(),
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-            ]);
+        $confirmationMessage = "Dear " . $request->name . ",\n\n"
+                             . "Thank you for contacting Judur. We have received your message and will get back to you within 24 hours.\n\n"
+                             . "Best regards,\n"
+                             . "Judur Team";
 
-            // Return a user-friendly error message
-            return response()->json([
-                'message' => 'Failed to send email. Please try again later.'
-            ], 500);
-        }
+        Mail::raw($confirmationMessage, function ($message) use ($request) {
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
+            $message->to($request->email)->subject('Thank You for Contacting Judur');
+        });
+
+        return response()->json(['message' => 'Contact message sent successfully.'], 201);
     }
 }
