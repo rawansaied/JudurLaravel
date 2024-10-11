@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Carbon\Carbon;
 use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\ItemDonation;
@@ -42,26 +42,64 @@ class AuctionController extends Controller
 
         return response()->json($formattedAuctions);
     }
+    public function show($id) {
+        $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
+        
+        // Count the number of bidders for the auction
+        $numberOfBidders = Bid::where('auction_id', $id)->count();
+        
+        $imageUrl = $auction->itemDonation->image 
+        ? asset('storage/' . $auction->itemDonation->image) 
+        : 'https://via.placeholder.com/150';
     
+        return response()->json([
+            'id' => $auction->id,
+            'title' => $auction->title,
+            'description' => $auction->description,
+            'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+            'start_date' => $auction->start_date,
+            'end_date' => $auction->end_date,
+            'number_of_bidders' => $numberOfBidders,
+            'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
+            'imageUrl' => $imageUrl, 
+        ]);
+}
 
-    // Complete the auction and notify the highest bidder
-    public function completeAuction($id)
-    {
-        $auction = Auction::findOrFail($id);
+public function completeAuction($id)
+{
+    // Find the auction by ID
+    $auction = Auction::findOrFail($id);
 
-        if (now()->greaterThan($auction->end_date)) {
-            $auction->update(['auction_status_id' => 3]); // Mark as completed
-            $itemDonation = ItemDonation::find($auction->item_id);
-            $itemDonation->update(['status_id' => 1]); // Mark the item as sold
+    // Check if the auction has ended
+    if (now()->greaterThan($auction->end_date)) {
+        // Update auction status to completed
+        $auction->update(['auction_status_id' => 3]); // Auction is completed
 
-            // Get the highest bid for the auction
-            $highestBid = Bid::where('auction_id', $id)->orderBy('bid_amount', 'desc')->first();
+        // Find the corresponding item donation and mark it as sold
+        $itemDonation = ItemDonation::find($auction->item_id);
+        $itemDonation->update(['status_id' => 1]); // Mark the item as sold
 
-            return response()->json(['message' => 'Auction completed, item marked as sold.']);
+        // Retrieve the highest bid for the auction
+        $highestBid = Bid::where('auction_id', $id)->orderBy('bid_amount', 'desc')->first();
+
+        if ($highestBid) {
+            // Log highest bidder info
+            Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
+
+            // Notify the highest bidder via email
+            $this->notifyHighestBidder($auction, $highestBid);
+
+            return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
+        } else {
+            // No highest bidder found
+            Log::info('No highest bidder found for auction', ['auction_id' => $id]);
+            return response()->json(['message' => 'Auction completed, but no bids were placed.']);
         }
-
-        return response()->json(['message' => 'Auction is still ongoing.'], 400);
     }
+
+    return response()->json(['message' => 'Auction is still ongoing.'], 400);
+}
+
     public function getCompletedAuctions()
 {
     $userId = auth()->id();
@@ -130,5 +168,8 @@ class AuctionController extends Controller
 
         Log::info('Email sent successfully to: ' . $user->email);
     }
+
+
+    
 }
 
