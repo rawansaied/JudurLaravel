@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\InspectionScheduled;
+use App\Events\LandInspectionScheduled as EventsLandInspectionScheduled;
+use App\Notifications\LandInspectionScheduled;
+use App\Models\Donor;
 use App\Models\Land;
 use App\Models\LandInspection;
+use App\Models\Notification;
 use App\Models\User;
 use App\Models\Volunteer;
 use Illuminate\Http\Request;
@@ -88,14 +91,12 @@ class VolunteerAnalyticsController extends Controller
     }
     public function getLandInspections($examinerId)
     {
-        // Fetch land inspections with related land and status data
         $inspections = LandInspection::with(['land.status'])->where('examiner_id', $examinerId)->get();
-    
+
         if ($inspections->isEmpty()) {
             return response()->json(['message' => 'No land inspections found for this examiner'], 404);
         }
-    
-        // Map the inspections to include the status name from the land_statuses table
+
         $inspectionsWithStatusName = $inspections->map(function ($inspection) {
             return [
                 'id' => $inspection->id,
@@ -109,20 +110,17 @@ class VolunteerAnalyticsController extends Controller
                 'general_condition' => $inspection->general_condition,
             ];
         });
-    
+
         return response()->json($inspectionsWithStatusName);
     }
     public function getPendingLands()
     {
-        $pendingStatusId = 1; // Assuming '1' is the ID for 'Pending' status
-        $currentDate = Carbon::now()->toDateString(); // Get the current date
-    
-        // Query to get pending lands with future availability
-        $pendingLands = Land::with('donor.user') // Assuming the relation 'donor' with 'user'
+        $pendingStatusId = 1; 
+
+        $pendingLands = Land::with('donor.user')
             ->where('status_id', $pendingStatusId)
-            ->where('availability_time', '>', $currentDate) // Only lands with future availability time
             ->get();
-    
+
         return response()->json($pendingLands);
     }
 
@@ -134,25 +132,43 @@ class VolunteerAnalyticsController extends Controller
     ]);
 
     $landId = $request->input('landId');
+    $inspectionDate = $request->input('inspectionDate');
     $land = Land::find($landId);
-
-    if ($land) {
-        Log::info('Land found:', ['landId' => $landId, 'status_id' => $land->status_id]);
-    } else {
-        Log::info('Land not found:', ['landId' => $landId]);
-    }
 
     if (!$land || $land->status_id != 1) {
         return response()->json(['message' => 'Land with pending status not found.'], 404);
     }
 
-    $landOwner = User::find($land->donor_id);
-    if ($landOwner) {
-        // Mail::to($landOwner->email)->send(new InspectionScheduled($land, $inspectionDate));
+    $donor = Donor::find($land->donor_id); 
+    if ($donor) {
+        $landOwner = $donor->user; 
+
+        $data = [
+            'message' => "Land inspection scheduled for {$inspectionDate} by {$landOwner->name}",
+            'notifiable_type' => User::class,
+            'notifiable_id' => $landOwner->id,
+        ];
+
+        $landOwner->notify(new LandInspectionScheduled($data));
+
+        Notification::create([
+            'user_id' => $landOwner->id,
+            'message' => $data['message'],
+            'is_read' => false,
+            'notifiable_type' => $data['notifiable_type'],
+            'notifiable_id' => $data['notifiable_id'],
+        ]);
+
         return response()->json(['message' => 'Land owner notified successfully.'], 200);
     } else {
         return response()->json(['message' => 'Land owner not found.'], 404);
     }
 }
-
+public function getNotifications()
+{
+    $notifications = Notification::where('user_id', Auth::id())->latest()->get();
+    
+    return response()->json($notifications);
 }
+
+}    

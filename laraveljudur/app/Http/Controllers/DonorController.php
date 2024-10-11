@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Donor;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DonorController extends Controller
 {
@@ -73,7 +74,7 @@ class DonorController extends Controller
         }
     
        
-        \Log::info('Donation type received: ' . $type);
+        Log::info('Donation type received: ' . $type);
     
      
         $validTypes = ['land', 'item', 'financial'];

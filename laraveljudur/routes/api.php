@@ -318,3 +318,31 @@ Route::post('/reset-password', function (Request $request) {
 
     return response()->json(['message' => 'Password reset successful.'], 200);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Route::middleware('auth:sanctum')->get('/notifications', [VolunteerAnalyticsController::class, 'getNotifications']);
+
+
