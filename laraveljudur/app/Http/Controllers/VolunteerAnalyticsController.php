@@ -145,8 +145,7 @@ class VolunteerAnalyticsController extends Controller
 
         $data = [
             'message' => "Land inspection scheduled for {$inspectionDate} by {$landOwner->name}",
-            'notifiable_type' => User::class,
-            'notifiable_id' => $landOwner->id,
+
         ];
 
         $landOwner->notify(new LandInspectionScheduled($data));
@@ -155,8 +154,7 @@ class VolunteerAnalyticsController extends Controller
             'user_id' => $landOwner->id,
             'message' => $data['message'],
             'is_read' => false,
-            'notifiable_type' => $data['notifiable_type'],
-            'notifiable_id' => $data['notifiable_id'],
+
         ]);
 
         return response()->json(['message' => 'Land owner notified successfully.'], 200);

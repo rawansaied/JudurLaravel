@@ -12,7 +12,5 @@ class Notification extends Model
         'user_id', 
         'message', 
         'is_read', 
-        'notifiable_type', 
-        'notifiable_id'
     ];
 }
