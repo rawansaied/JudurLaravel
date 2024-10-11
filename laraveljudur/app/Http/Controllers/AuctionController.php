@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\ItemDonation;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Mime\Part\HtmlPart;
 
 class AuctionController extends Controller
 {
@@ -69,66 +67,82 @@ class AuctionController extends Controller
     public function completeAuction($id)
     {
         $auction = Auction::findOrFail($id);
-
+    
+        // Check if the auction has ended
         if (now()->greaterThan($auction->end_date)) {
-            $auction->update(['auction_status_id' => 3]); // Mark as completed
+            // Mark the auction as completed
+            $auction->update(['auction_status_id' => 3]);
+    
+            // Mark the item as sold
             $itemDonation = ItemDonation::find($auction->item_id);
             $itemDonation->update(['status_id' => 1]); // Mark the item as sold
-
-            // Get the highest bid for the auction
+    
+            // Get the highest bid
             $highestBid = Bid::where('auction_id', $id)->orderBy('bid_amount', 'desc')->first();
-
-            return response()->json(['message' => 'Auction completed, item marked as sold.']);
-        }
-
-        return response()->json(['message' => 'Auction is still ongoing.'], 400);
-    }
-    public function getCompletedAuctions()
-    {
-        $userId = auth()->id();
     
-        $completedAuctions = Auction::where('end_date', '<', now())
-            ->with(['bids', 'itemDonation']) 
-            ->get();
+            if ($highestBid) {
+                Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
     
-                if ($highestBid) {
-                    Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
-    
-                    // Notify highest bidder via email
-                    $this->notifyHighestBidder($auction, $highestBid);
-                } else {
-                    Log::info('No highest bidder found for auction', ['auction_id' => $id]);
-                }
-    
-                return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
-        foreach ($completedAuctions as $auction) {
-            $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
-    
-            if ($highestBid && $highestBid->user_id == $userId) {
-                $imageUrl = $auction->itemDonation->image
-                    ? asset('storage/' . $auction->itemDonation->image)
-                    : 'https://via.placeholder.com/150'; 
-    
-                $auctionWinners[] = [
-                    'auction_id' => $auction->id,
-                    'auction_status_id'=>$auction->auction_status_id,
-                    'auction_title' => $auction->title,
-                    'auction_image' => $imageUrl,
-                    'highest_bidder_id' => $highestBid->user_id,
-                    'highest_bidder_name' => $highestBid->user->name,
-                    'bid_amount' => $highestBid->bid_amount, 
-                ];
+                // Notify highest bidder via email
+                $this->notifyHighestBidder($auction, $highestBid);
+            } else {
+                Log::info('No highest bidder found for auction', ['auction_id' => $id]);
             }
     
-            return response()->json(['message' => 'Auction is still ongoing'], 400);
+            return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
+        }
+    
+        return response()->json(['message' => 'Auction is still ongoing.'], 400);
+    }
+    
+
+    // Notify the highest bidder via email
+    public function notifyHighestBidder($auction, $highestBid)
+    {
+        $user = $highestBid->user;
+    
+        if (empty($user->email)) {
+            Log::error('User with ID ' . $user->id . ' has no email address.');
+            return;
+        }
+    
+        Log::info('Attempting to send email to: ' . $user->email);
+    
+        $emailContent = [
+            'auctionTitle' => $auction->title,
+            'bidAmount' => $highestBid->bid_amount,
+            'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id . '&userId=' . $highestBid->user_id,
+        ];
+        
+        $htmlContent = '
+            <h1>Congratulations! You won the auction: ' . $emailContent['auctionTitle'] . '</h1>
+            <p>Your bid: $' . $emailContent['bidAmount'] . '</p>
+            <p><a href="' . $emailContent['paymentLink'] . '">Click here to make the payment</a></p>
+        ';
+        
+        try {
+            Mail::send([], [], function ($message) use ($user, $htmlContent) {
+                $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                    ->to($user->email)
+                    ->subject('Congratulations! You won the auction')
+                    ->setBody($htmlContent, 'text/html'); // Send as HTML
+            });
+        
+            Log::info('Email sent successfully to: ' . $user->email);
+        } catch (\Exception $e) {
+            Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
         }
     }
+    
+    
+    
 
+
+    // Test email sending
     public function Email()
     {
-        // Simulate an auction and highest bid for testing
-        $auction = Auction::find(1); // Replace with an actual auction ID from your database
-        $highestBid = Bid::where('auction_id', 1)->orderBy('bid_amount', 'desc')->first(); // Replace with the corresponding bid ID
+        $auction = Auction::find(1); // Replace with an actual auction ID
+        $highestBid = Bid::where('auction_id', 1)->orderBy('bid_amount', 'desc')->first();
 
         if ($auction && $highestBid) {
             $this->notifyHighestBidder($auction, $highestBid);
@@ -137,34 +151,7 @@ class AuctionController extends Controller
         }
 
         return response()->json(['message' => 'Auction or highest bid not found'], 404);
-    }
-
-    // Notify the highest bidder via email
-    protected function notifyHighestBidder($auction, $highestBid)
-    {
-        $user = $highestBid->user;
-
-        Log::info('Attempting to send email to: ' . $user->email);
-
-        $emailContent = [
-            'auctionTitle' => $auction->title,
-            'bidAmount' => $highestBid->bid_amount,
-            'paymentLink' => 'http://localhost:4200/auction-payment' . $auction->id,
-        ];
-
-        // Prepare the HTML content for the email
-        $htmlContent = 'Congratulations! You won the auction: ' . $emailContent['auctionTitle'] . ' '
-            . 'Your bid: $' . $emailContent['bidAmount'] . ' '
-            . '<a href="' . $emailContent['paymentLink'] . '">Click here to make the payment</a>';
-
-        // Send the email using Mail::raw()
-        Mail::raw($htmlContent, function ($message) use ($user) {
-            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
-                ->to($user->email)
-                ->subject('Congratulations! You won the auction');
-        });
-
-        Log::info('Email sent successfully to: ' . $user->email);
-    }
 }
 
+
+}
