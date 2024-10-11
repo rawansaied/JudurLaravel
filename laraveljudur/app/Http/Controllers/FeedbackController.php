@@ -31,12 +31,31 @@ class FeedbackController extends Controller
 
 
 
-
-
     public function index()
     {
+        // Get all feedbacks with the associated user data
         $feedbacks = Feedback::with('user')->get();
-
-        return response()->json($feedbacks);
+    
+        // Loop through each feedback to include the user's profile picture
+        $feedbacksWithUserImage = $feedbacks->map(function ($feedback) {
+            if ($feedback->user) {
+                // Check if the user has a profile picture
+                if ($feedback->user->profile_picture) {
+                    // Generate the full URL to the profile picture
+                    $feedback->user->profile_picture= asset('storage/'. $feedback->user->profile_picture);
+                    // $user->profile_picture ? asset('storage/' . $user->profile_picture)
+                } else {
+                    // Provide a default image if none is uploaded
+                    $feedback->user->image_url = url('storage/profile_pictures/default.png');
+                }
+            }
+    
+            return $feedback;
+        });
+    
+        // Return the modified feedbacks as JSON
+        return response()->json($feedbacksWithUserImage);
     }
+    
+    
 }

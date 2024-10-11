@@ -181,7 +181,7 @@ Route::get('/examiner-lands/{volunteerId}', [VolunteerAnalyticsController::class
 Route::get('/land-inspections/{examinerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
 
 Route::get('/pending-lands', [VolunteerAnalyticsController::class, 'getPendingLands']);
-Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
+Route::middleware('auth:sanctum')->post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
 
 
 
@@ -423,3 +423,4 @@ Route::get('/auction/{auctionId}/winner', [AuctionController::class, 'getAuction
 Route::get('/email', [AuctionController::class, 'Email']);
 // Route::get('/email', [AuctionController::class, 'Email']);
 
+Route::middleware('auth:sanctum')->post('/notifications/{id}/mark-as-read', [VolunteerAnalyticsController::class, 'toggleReadStatus']);
