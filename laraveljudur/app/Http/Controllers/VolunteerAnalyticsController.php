@@ -113,18 +113,24 @@ class VolunteerAnalyticsController extends Controller
 
         return response()->json($inspectionsWithStatusName);
     }
-    public function getPendingLands()
-    {
-        $pendingStatusId = 1; 
 
-        $pendingLands = Land::with('donor.user')
-            ->where('status_id', $pendingStatusId)
-            ->get();
+public function getPendingLands()
+{
+    $pendingStatusId = 1;
+    $currentDate = Carbon::now()->format('Y-m-d');
 
-        return response()->json($pendingLands);
-    }
+    $pendingLands = Land::with('donor.user')
+        ->where('status_id', $pendingStatusId)
+        ->whereDate('availability_time', '>', $currentDate) 
+        ->get();
 
-    public function notifyLandOwner(Request $request)
+    return response()->json($pendingLands);
+}
+
+
+
+
+public function notifyLandOwner(Request $request)
 {
     $request->validate([
         'landId' => 'required|integer',
@@ -133,42 +139,85 @@ class VolunteerAnalyticsController extends Controller
 
     $landId = $request->input('landId');
     $inspectionDate = $request->input('inspectionDate');
-    $land = Land::find($landId);
+
+    $land = Land::with('donor.user')->find($landId);
 
     if (!$land || $land->status_id != 1) {
         return response()->json(['message' => 'Land with pending status not found.'], 404);
     }
 
-    $donor = Donor::find($land->donor_id); 
-    if ($donor) {
-        $landOwner = $donor->user; 
+    if (!$land->donor || !$land->donor->user) {
+        return response()->json(['message' => 'Land donor or landowner not found.'], 404);
+    }
 
-        $data = [
-            'message' => "Land inspection scheduled for {$inspectionDate} by {$landOwner->name}",
-            'notifiable_type' => User::class,
-            'notifiable_id' => $landOwner->id,
-        ];
+    // Validate that the inspection date is before the availability time
+    if ($land->availability_time <= $inspectionDate) {
+        return response()->json(['message' => 'Inspection date must be before the land availability time.'], 400);
+    }
 
+    $examinerId = $request->user()->id;  
+    $examiner = Volunteer::where('user_id', $examinerId)->first();
+
+    if (!$examiner) {
+        return response()->json(['message' => 'No examiner (volunteer) found.'], 400);
+    }
+
+    $landOwner = $land->donor->user;
+
+    $data = [
+        'message' => "Inspection for your land \"{$land->description}\" at {$land->address} is scheduled for {$inspectionDate} by examiner {$examiner->name}.",
+        'notifiable_type' => User::class,
+        'notifiable_id' => $landOwner->id,
+    ];
+
+    try {
         $landOwner->notify(new LandInspectionScheduled($data));
+
+        $land->status_id = 4; 
+        $land->save();
 
         Notification::create([
             'user_id' => $landOwner->id,
             'message' => $data['message'],
             'is_read' => false,
-            'notifiable_type' => $data['notifiable_type'],
-            'notifiable_id' => $data['notifiable_id'],
         ]);
 
-        return response()->json(['message' => 'Land owner notified successfully.'], 200);
-    } else {
-        return response()->json(['message' => 'Land owner not found.'], 404);
+        return response()->json(['message' => 'Land owner notified and status updated to scheduled.'], 200);
+    } catch (\Exception $e) {
+        Log::error('Error notifying land owner: ' . $e->getMessage());
+        return response()->json(['message' => 'An error occurred while notifying the landowner.'], 500);
     }
 }
-public function getNotifications()
-{
-    $notifications = Notification::where('user_id', Auth::id())->latest()->get();
-    
-    return response()->json($notifications);
-}
 
-}    
+
+
+
+    public function getNotifications()
+    {
+        $notifications = Notification::where('user_id', Auth::id())->latest()->get();
+
+        return response()->json($notifications);
+    }
+
+    public function toggleReadStatus($id)
+    {
+        $notification = Notification::find($id);
+
+        if ($notification) {
+            if ($notification->user_id === Auth::id()) {
+                $notification->is_read = !$notification->is_read;
+                $notification->save();
+
+                $status = $notification->is_read ? 'read' : 'unread';
+                return response()->json([
+                    'message' => "Notification marked as $status",
+                    'notification' => $notification  
+                ], 200);
+            } else {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        } else {
+            return response()->json(['error' => 'Notification not found'], 404);
+        }
+    }
+}
