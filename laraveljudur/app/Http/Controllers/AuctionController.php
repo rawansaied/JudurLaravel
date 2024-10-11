@@ -128,6 +128,29 @@ class AuctionController extends Controller
             return response()->json(['message' => 'Test email sent successfully']);
         }
 
-        return response()->json(['message' => 'Auction or highest bid not found'], 404);
-    }
+        return response()->json(['message' => 'Auction or highest bid not found'], 404);
+}
+
+public function show($id) {
+    $auction = Auction::with('itemDonation', 'highestBidder')->findOrFail($id);
+    
+    // Count the number of bidders for the auction
+    $numberOfBidders = Bid::where('auction_id', $id)->count();
+    
+    $imageUrl = $auction->itemDonation->image 
+    ? asset('storage/' . $auction->itemDonation->image) 
+    : 'https://via.placeholder.com/150';
+
+    return response()->json([
+        'id' => $auction->id,
+        'title' => $auction->title,
+        'description' => $auction->description,
+        'current_highest_bid' => $auction->current_highest_bid ?? $auction->starting_price,
+        'start_date' => $auction->start_date,
+        'end_date' => $auction->end_date,
+        'number_of_bidders' => $numberOfBidders,
+        'highest_bidder' => $auction->highestBidder->name ?? 'No bids yet',
+        'imageUrl' => $imageUrl, 
+]);
+}
 }

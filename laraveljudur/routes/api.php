@@ -204,14 +204,12 @@ Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController
 Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
 
 
-// // Route::get('/auctions', [AuctionController::class, 'index']);
 
 
 
 
-// // Route::apiResource('auctions', AuctionController::class);
-// Route::get('/auctions', [AuctionController::class, 'index']); // View all available auctions
-// Route::get('/auctions/{id}', [AuctionController::class, 'show']); // View a single auction by ID
+
+Route::apiResource('auctions', AuctionController::class);
 
 // Protected routes (requires authentication using Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
@@ -394,5 +392,5 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/auction/{auctionId}/winner', [AuctionController::class, 'getAuctionWinnerAndStorePayment']); // Get auction winner and store payment
 
 
-
+// Route::get('/email', [AuctionController::class, 'Email']);
 
