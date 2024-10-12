@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\ItemDonation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -153,7 +154,7 @@ class AuctionController extends Controller
         return response()->json(['message' => 'Auction or highest bid not found'], 404);
 }
 
-public function getCompletedAuctions()
+public function getCompletedAuctions(Request $request)
 {
     // Check if the user is authenticated
     $userId = auth()->id();
@@ -161,42 +162,47 @@ public function getCompletedAuctions()
         return response()->json(['error' => 'User not authenticated'], 401);
     }
 
-    // Get completed auctions where the auction has ended
-    $completedAuctions = Auction::where('end_date', '<', now())
+    // Get the auctionId from the request
+    $auctionId = $request->query('auctionId');
+
+    // If no auctionId is provided, return an error
+    if (!$auctionId) {
+        return response()->json(['error' => 'Auction ID is required'], 400);
+    }
+
+    // Get the completed auction with the specified auctionId
+    $completedAuction = Auction::where('id', $auctionId)
+        ->where('end_date', '<', now())
         ->with(['bids', 'itemDonation'])
-        ->get();
+        ->first();
 
-    $auctionWinners = [];
-
-    foreach ($completedAuctions as $auction) {
-        // Get the highest bid for the auction
-        $highestBid = $auction->bids()->orderBy('bid_amount', 'desc')->first();
-
-        // If there is a highest bid and the user is the highest bidder
-        if ($highestBid && $highestBid->user_id == $userId) {
-            // Check if the itemDonation exists before accessing its image
-            $imageUrl = $auction->itemDonation 
-                ? asset('storage/' . $auction->itemDonation->image)
-                : 'https://via.placeholder.com/150'; // Fallback placeholder image
-
-            // Append the auction details to the response
-            $auctionWinners[] = [
-                'auction_id' => $auction->id,
-                'auction_title' => $auction->title,
-                'auction_image' => $imageUrl,
-                'highest_bidder_id' => $highestBid->user_id,
-                'highest_bidder_name' => $highestBid->user->name,
-                'bid_amount' => $highestBid->bid_amount,
-            ];
-        }
+    if (!$completedAuction) {
+        return response()->json(['message' => 'Auction not found or not completed'], 404);
     }
 
-    // Check if there are any winners
-    if (empty($auctionWinners)) {
-        return response()->json(['message' => 'No completed auctions found for the user.'], 404);
+    // Get the highest bid for the auction
+    $highestBid = $completedAuction->bids()->orderBy('bid_amount', 'desc')->first();
+
+    // If there is a highest bid and the user is the highest bidder
+    if ($highestBid && $highestBid->user_id == $userId) {
+        // Check if the itemDonation exists before accessing its image
+        $imageUrl = $completedAuction->itemDonation 
+            ? asset('storage/' . $completedAuction->itemDonation->image)
+            : 'https://via.placeholder.com/150'; // Fallback placeholder image
+
+        // Return the auction details as response
+        return response()->json([
+            'auction_id' => $completedAuction->id,
+            'auction_title' => $completedAuction->title,
+            'auction_image' => $imageUrl,
+            'highest_bidder_id' => $highestBid->user_id,
+            'highest_bidder_name' => $highestBid->user->name,
+            'bid_amount' => $highestBid->bid_amount,
+            'auction_status_id' => $completedAuction->status_id, // Assuming you have a status_id
+        ]);
     }
 
-    return response()->json($auctionWinners);
+    return response()->json(['message' => 'No auction winner data found for this user'], 404);
 }
 
 
