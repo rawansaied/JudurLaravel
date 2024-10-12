@@ -17,8 +17,10 @@ use App\Models\Financial;
 use App\Models\Donor;
 use App\Models\Inventory;
 use App\Models\LandStatus;
+use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\Treasury;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class DonationController extends Controller
@@ -68,6 +70,27 @@ class DonationController extends Controller
             'availability_time' => Carbon::parse($request->input('availability_time'))->toDateString(), // Store only the date
         ]);
 
+        $admins = User::where('role_id', 1)->get();
+        $organizers = User::where('role_id', 6)->get();
+        $user = User::find($donor->user_id);
+        
+        foreach ($admins as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,  
+                'message' => 'A new land donation has been made by ' . $user->name . '. Please review the details through the Land Donations management page.',
+                'is_read' => false,
+            ]);
+        }
+        
+        foreach ($organizers as $organizer) {
+            Notification::create([
+                'user_id' => $organizer->id,  
+                'message' => 'A new land has been donated by ' . $user->name . '. Kindly check the Land Donations management page for more information.',
+                'is_read' => false,
+            ]);
+        }
+        
+
         return response()->json(['message' => 'Land donated successfully', 'land' => $land], 201);
     }
 
@@ -109,6 +132,26 @@ class DonationController extends Controller
                 }
                 $statusId = $status->id;
                 $value = $validatedData['value'];
+                $admins = User::where('role_id', 1)->get();
+                $organizers = User::where('role_id', 6)->get();
+                $user = User::find($donor->user_id);
+                
+                foreach ($admins as $admin) {
+                    Notification::create([
+                        'user_id' => $admin->id,  
+                        'message' => 'A new valuable items donation has been made by ' . $user->name . '. Please review the details through the Valuable Donations management page.',
+                        'is_read' => false,
+                    ]);
+                }
+                
+                foreach ($organizers as $organizer) {
+                    Notification::create([
+                        'user_id' => $organizer->id,  
+                        'message' => 'A new donation of valuable items has been made by ' . $user->name . '. Kindly check the Valuable Donations management page for more information.',
+                        'is_read' => false,
+                    ]);
+                }
+                
             } else {
                 $inventory = Inventory::where('id', 1)->first();
                 if (!$inventory) {
@@ -188,6 +231,18 @@ class DonationController extends Controller
             'currency' => $request->currency,
             'payment_method' => $request->payment_method,
         ]);
+
+        $admins = User::where('role_id', 1)->get();
+        $user = User::find($donor->user_id);
+        
+        foreach ($admins as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,  
+                'message' => 'A new financial donation has been made by ' . $user->name . '. Please review the details through the main page in dashboard.',
+                'is_read' => false,
+            ]);
+        }
+        
 
         $treasury = Treasury::where('id', 1)->first();
         $old_money = $treasury->money;

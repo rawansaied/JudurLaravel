@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\EventNotification;
 use App\Events\EventCreated;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
@@ -213,10 +214,8 @@ public function eventDetails($id)
 
 public function eventForm()
 {
-    // Get the current date
     $currentDate = Carbon::now()->toDateString();
 
-    // Fetch lands with status_id = 2 and availability_time in the future
     $lands = Land::where('status_id', 2)
                 ->where('availability_time', '>', $currentDate)
                 ->get();
@@ -267,7 +266,15 @@ public function createEvent(Request $request)
     $treasury->update(['money' => $new_money]);
     $new_items = $old_items - $request->allocatedItems;
     $inventory->update(['items' => $new_items]);
-    
+    $volunteers = Volunteer::where('volunteer_status', 2)->get();
+
+    foreach ($volunteers as $volunteer) {
+        Notification::create([
+            'user_id' => $volunteer->user_id,  
+            'message' => 'A new Charity Event "' . $event->title . '" has been created. Please check the details through events page.',
+            'is_read' => false,
+        ]);
+    }
 
     if ($event->save()) {
         return response()->json(['message' => 'Event created successfully', 'data' => $event], 201);
@@ -355,6 +362,15 @@ public function editEvent(Request $request, $id)
         }
     }
 
+    $volunteers = Volunteer::where('volunteer_status', 2)->get();
+
+    foreach ($volunteers as $volunteer) {
+        Notification::create([
+            'user_id' => $volunteer->user_id,  
+            'message' => 'There have been new updates to the "' . $event->title . '" charity event. Please check the details on the events page.',
+            'is_read' => false,
+        ]);
+    }
     if ($event->save()) {
         return response()->json(['message' => 'Event updated successfully', 'data' => $event], 200);
     } else {
@@ -372,6 +388,16 @@ public function deleteEvent($id)
 
     if ($event->image) {
         Storage::disk('public')->delete($event->image);
+    }
+
+    $volunteers = Volunteer::where('volunteer_status', 2)->get();
+
+    foreach ($volunteers as $volunteer) {
+        Notification::create([
+            'user_id' => $volunteer->user_id,  
+            'message' => 'We regret to inform you that the charity event, "' . $event->title . '", has been cancelled. We appreciate your support and understanding. Thank you for your continued interest in our activities.',
+            'is_read' => false,
+        ]);
     }
 
     $event->delete();
@@ -422,6 +448,25 @@ public function createAuction(Request $request)
     $auction = new Auction();
     $auction->fill($validatedData);
     $auction->auction_status_id = $validatedData['status'];
+
+    $volunteers = Volunteer::where('volunteer_status', 2)->get();
+
+    foreach ($volunteers as $volunteer) {
+        Notification::create([
+            'user_id' => $volunteer->user_id,
+            'message' => 'A new charity auction, "' . $auction->title . '", has been created! Please check the details on the auctions page.',
+            'is_read' => false,
+        ]);
+    }
+    $donors = Donor::all();
+
+    foreach ($donors as $donor) {
+        Notification::create([
+            'user_id' => $donor->user_id,
+            'message' => 'A new charity auction, "' . $auction->title . '", has been created! Please check the details on the auctions page.',
+            'is_read' => false,
+        ]);
+    }
     if ($auction->save()) {
         return response()->json(['message' => 'Auction created successfully', 'data' => $auction], 201);
     } else {
@@ -446,7 +491,25 @@ public function editAuction(Request $request, $id)
     $auction->fill($validatedData);
     $auction->auction_status_id = $validatedData['status'];
 
+    $volunteers = Volunteer::where('volunteer_status', 2)->get();
 
+    foreach ($volunteers as $volunteer) {
+        Notification::create([
+            'user_id' => $volunteer->user_id,
+            'message' => 'There have been updates to the charity auction, "' . $auction->title . '". Please check the details on the auctions page.',
+            'is_read' => false,
+        ]);
+    }
+    
+    $donors = Donor::all();
+    
+    foreach ($donors as $donor) {
+        Notification::create([
+            'user_id' => $donor->user_id,
+            'message' => 'There have been updates to the charity auction, "' . $auction->title . '". Please check the details on the auctions page.',
+            'is_read' => false,
+        ]);
+    }
     if ($auction->save()) {
         return response()->json(['message' => 'Auction updated successfully', 'data' => $auction], 200);
     } else {
@@ -457,6 +520,25 @@ public function editAuction(Request $request, $id)
 public function deleteAuction($id)
 {
     $auction = Auction::findOrFail($id);
+$volunteers = Volunteer::where('volunteer_status', 2)->get();
+
+foreach ($volunteers as $volunteer) {
+    Notification::create([
+        'user_id' => $volunteer->user_id,
+        'message' => 'We regret to inform you that the charity auction, "' . $auction->title . '", has been cancelled. Thank you for your support and understanding.',
+        'is_read' => false,
+    ]);
+}
+
+$donors = Donor::all();
+
+foreach ($donors as $donor) {
+    Notification::create([
+        'user_id' => $donor->user_id,
+        'message' => 'We regret to inform you that the charity auction, "' . $auction->title . '", has been cancelled. Thank you for your support and understanding.',
+        'is_read' => false,
+    ]);
+}
 
 
     $auction->delete();

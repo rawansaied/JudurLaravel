@@ -15,6 +15,7 @@ class StatusSeeder extends Seeder
         LandStatus::create(['name' => 'Pending']);
         LandStatus::create(['name' => 'Accepted']);
         LandStatus::create(['name' => 'Rejected']);
+        LandStatus::create(['name' => 'Scheduled']);
 
         VolunteerStatus::create(['name' => 'Pending']);
         VolunteerStatus::create(['name' => 'Accepted']);
