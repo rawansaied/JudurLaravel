@@ -150,7 +150,7 @@ class AuctionController extends Controller
             return response()->json(['message' => 'Test email sent successfully']);
         }
 
-        return response()->json(['message' => 'Auction or highest bid not found'], 404);
+        return response()->json(['message' => 'Auction or highest bid not found']);
 }
 
 
