@@ -20,6 +20,7 @@ use App\Http\Controllers\LandController;
 use App\Http\Controllers\BidController;
 use App\Http\Controllers\FeedbackController;
 
+Route::post('/create-payment', [DonationController::class, 'createAuctionPayment']);
 use Illuminate\Support\Facades\Log;
 
 
@@ -180,10 +181,11 @@ Route::get('/examiner-lands/{volunteerId}', [VolunteerAnalyticsController::class
 Route::get('/land-inspections/{examinerId}', [VolunteerAnalyticsController::class, 'getLandInspections']);
 
 Route::get('/pending-lands', [VolunteerAnalyticsController::class, 'getPendingLands']);
-Route::post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
+Route::middleware('auth:sanctum')->post('/lands/notify-land-owners', [VolunteerAnalyticsController::class, 'notifyLandOwner']);
 
 
 
+Route::post('/contact', [ContactUsController::class, 'store']);
 
 
 // Route to show the contact form
@@ -293,7 +295,7 @@ Route::get('/dashboard-data', [AdminController::class, 'getDashboardData']);
 
 
 Route::post('/donate', [DonationController::class, 'donate']);
-Route::middleware('auth:sanctum')->post('/create-payment', [DonationController::class, 'createPayment']);
+Route::post('/create-payment', [DonationController::class, 'createPayment']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/create-auction-payment', [DonationController::class, 'createAuctionPayment']);
 });
@@ -373,13 +375,38 @@ Route::post('/reset-password', function (Request $request) {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Route::middleware('auth:sanctum')->get('/notifications', [VolunteerAnalyticsController::class, 'getNotifications']);
+
 // Auction routes
 
 
 // Auction routes
 Route::get('/auctions', [AuctionController::class, 'index']); // Get all ongoing auctions
 Route::get('/auctions/{id}', [AuctionController::class, 'show']); // Show details of a specific auction
-Route::get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']); // View all completed auctions
+Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']); // Get the highest bid for a specific auction
 
 // Bid routes
@@ -392,5 +419,8 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/auction/{auctionId}/winner', [AuctionController::class, 'getAuctionWinnerAndStorePayment']); // Get auction winner and store payment
 
 
+
+Route::get('/email', [AuctionController::class, 'Email']);
 // Route::get('/email', [AuctionController::class, 'Email']);
 
+Route::middleware('auth:sanctum')->post('/notifications/{id}/mark-as-read', [VolunteerAnalyticsController::class, 'toggleReadStatus']);

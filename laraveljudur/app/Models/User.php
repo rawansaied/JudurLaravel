@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use App\Models\Donor;
 use App\Models\Volunteer;
 use Laravel\Cashier\Billable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasApiTokens,Billable,  Notifiable;
+    use HasFactory, Notifiable, HasApiTokens,Billable;
 
 
     protected $fillable = [
@@ -87,6 +87,11 @@ class User extends Authenticatable
 {
     return $this->belongsToMany(Event::class, 'event_volunteer', 'volunteer_id', 'event_id');
 }
+public function donor()
+{
+    return $this->hasOne(Donor::class);
+}
+
 
 
 public function volunteerProfile()

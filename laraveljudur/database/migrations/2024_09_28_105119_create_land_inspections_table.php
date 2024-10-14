@@ -19,7 +19,7 @@ class CreateLandInspectionsTable extends Migration
             $table->string('general_condition');
             $table->string('photo_path')->nullable(); 
           
-            $table->text('summary')->nullable(); // New column for summary
+            $table->text('summary')->nullable(); 
             $table->json('suggestions')->nullable();
             $table->timestamps();
 

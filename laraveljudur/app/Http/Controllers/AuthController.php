@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Donor;
+use App\Models\Notification;
 use App\Models\Volunteer;
 use Illuminate\Support\Facades\DB;  
 use Illuminate\Support\Facades\Log;
@@ -148,6 +149,26 @@ class AuthController extends Controller
                 'aim' => $validated['aim'],
                 'volunteer_status'=> 1,
             ]);
+
+            $admins = User::where('role_id', 1)->get();
+            $mentors = User::where('role_id', 6)->get();
+            
+            foreach ($admins as $admin) {
+                Notification::create([
+                    'user_id' => $admin->id,  
+                    'message' => 'A new volunteer request '. $user->name .' has been made. Please review the request through the volunteers management page.',
+                    'is_read' => false,
+                ]);
+            }
+            
+            foreach ($mentors as $mentor) {
+                Notification::create([
+                    'user_id' => $mentor->id,  
+                    'message' => 'A new volunteer request '. $user->name .' has been submitted. Kindly check the volunteers management page for details.',
+                    'is_read' => false,
+                ]);
+            }
+            
     
             Log::info('Volunteer registered successfully', ['user_id' => $user->id]);
     
