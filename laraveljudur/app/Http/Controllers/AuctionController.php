@@ -68,73 +68,64 @@ class AuctionController extends Controller
     public function completeAuction($id)
     {
         $auction = Auction::findOrFail($id);
-    
-        // Check if the auction has ended
+
         if (now()->greaterThan($auction->end_date)) {
-            // Mark the auction as completed
-            $auction->update(['auction_status_id' => 3]);
-    
-            // Mark the item as sold
+            $auction->update(['auction_status_id' => 3]); // Mark as completed
             $itemDonation = ItemDonation::find($auction->item_id);
             $itemDonation->update(['status_id' => 1]); // Mark the item as sold
-    
-            // Get the highest bid
+
             $highestBid = Bid::where('auction_id', $id)->orderBy('bid_amount', 'desc')->first();
-    
+
             if ($highestBid) {
                 Log::info('Highest bidder found', ['user_id' => $highestBid->user_id]);
-    
+
                 // Notify highest bidder via email
                 $this->notifyHighestBidder($auction, $highestBid);
             } else {
                 Log::info('No highest bidder found for auction', ['auction_id' => $id]);
             }
-    
+
             return response()->json(['message' => 'Auction completed, item marked as sold, email sent to highest bidder.']);
         }
-    
+
         return response()->json(['message' => 'Auction is still ongoing.'], 400);
     }
-    
 
     // Notify the highest bidder via email
-    public function notifyHighestBidder($auction, $highestBid)
-    {
-        $user = $highestBid->user;
-    
-        if (empty($user->email)) {
-            Log::error('User with ID ' . $user->id . ' has no email address.');
-            return;
-        }
-    
-        Log::info('Attempting to send email to: ' . $user->email);
-    
-        $emailContent = [
-            'auctionTitle' => $auction->title,
-            'bidAmount' => $highestBid->bid_amount,
-            'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id . '&userId=' . $highestBid->user_id,
-        ];
-        
-        $htmlContent = '
-            <h1>Congratulations! You won the auction: ' . $emailContent['auctionTitle'] . '</h1>
-            <p>Your bid: $' . $emailContent['bidAmount'] . '</p>
-            <p><a href="' . $emailContent['paymentLink'] . '">Click here to make the payment</a></p>
-        ';
-        
-        try {
-            Mail::send([], [], function ($message) use ($user, $htmlContent) {
-                $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
-                    ->to($user->email)
-                    ->subject('Congratulations! You won the auction')
-                    ->setBody($htmlContent, 'text/html'); // Send as HTML
-            });
-        
-            Log::info('Email sent successfully to: ' . $user->email);
-        } catch (\Exception $e) {
-            Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
-        }
+  public function notifyHighestBidder($auction, $highestBid)
+{
+    $user = $highestBid->user;
+
+    if (empty($user->email)) {
+        Log::error('User with ID ' . $user->id . ' has no email address.');
+        return;
     }
-    
+
+    Log::info('Attempting to send email to: ' . $user->email);
+
+    $emailContent = [
+        'auctionTitle' => $auction->title,
+        'bidAmount' => $highestBid->bid_amount,
+        'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id, // Updated link
+    ];
+
+    $htmlContent = 'Congratulations! You won the auction: ' . $emailContent['auctionTitle'] . ' '
+        . 'Your bid: $' . $emailContent['bidAmount'] . ' '
+        . '<a href="' . $emailContent['paymentLink'] . '">Click here to make the payment</a>';
+
+    try {
+        Mail::raw($htmlContent, function ($message) use ($user) {
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                ->to($user->email)
+                ->subject('Congratulations! You won the auction');
+        });
+
+        Log::info('Email sent successfully to: ' . $user->email);
+    } catch (\Exception $e) {
+        Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
+    }
+}
+
     
     
 

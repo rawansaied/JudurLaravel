@@ -44,19 +44,24 @@ class CheckAuctionStatus extends Command
                 $emailContent = [
                     'auctionTitle' => $auction->title,
                     'bidAmount' => $highestBid->bid_amount,
-                   'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id . '&userId=' . $highestBid->user_id,
-
+                    'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id . '&userId=' . $highestBid->user_id,
                 ];
 
-                $htmlContent = 'Congratulations! You won the auction: ' . $emailContent['auctionTitle'] . ' '
-                    . 'Your bid: $' . $emailContent['bidAmount'] . ' '
-                    . '<a href="' . $emailContent['paymentLink'] . '">Click here to make the payment</a>';
+                $htmlContent = 'Dear ' . $user->name . ',<br><br>'
+                    . 'We are excited to inform you that you have won the auction for: <strong>' . $emailContent['auctionTitle'] . '</strong>!<br>'
+                    . 'Your winning bid amount is: $' . number_format($emailContent['bidAmount'], 2) . '.<br><br>'
+                    . 'To finalize your payment, please click the link below:<br>'
+                    . '<a href="' . $emailContent['paymentLink'] . '">Make Payment</a><br><br>'
+                    . 'Thank you for your participation, and we look forward to seeing you in future auctions!<br>'
+                    . 'Best regards,<br>'
+                    . 'The Auction Team';
 
                 try {
-                    Mail::raw($htmlContent, function ($message) use ($user) {
+                    Mail::send([], [], function ($message) use ($user, $htmlContent) {
                         $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
                             ->to($user->email)
-                            ->subject('Congratulations! You won the auction');
+                            ->subject('Auction Winner Notification')
+                            ->html($htmlContent); // Use html() to send HTML content
                     });
 
                     Log::info('Email sent successfully to: ' . $user->email);
