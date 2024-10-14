@@ -64,7 +64,7 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'category' => 'required|string',
-            'image' => 'nullable|string' // Accept the image as a base64 encoded string
+            'image' => 'nullable|string'
         ]);
 
         // Fetch the post
@@ -73,7 +73,7 @@ class PostController extends Controller
         $post->content = $request->input('content');
         $post->category = $request->input('category');
 
-        // Handle base64 encoded image
+
         if ($request->image) {
             // Extract the image data
             $imageData = $request->input('image');
