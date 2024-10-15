@@ -32,41 +32,17 @@ class CheckAuctionStatus extends Command
             $highestBid = Bid::where('auction_id', $auction->id)->orderBy('bid_amount', 'desc')->first();
 
             if ($highestBid) {
-                $user = $highestBid->user;
+                // Notify the highest bidder
+                $this->notifyHighestBidder($auction, $highestBid);
 
-                if (empty($user->email)) {
-                    Log::error('User with ID ' . $user->id . ' has no email address.');
-                    continue; // Skip this user if there's no valid email
-                }
+                // Get all other bids (losers)
+                $losingBids = Bid::where('auction_id', $auction->id)
+                    ->where('id', '!=', $highestBid->id) // Exclude the highest bid
+                    ->get();
 
-                Log::info('Attempting to send email to: ' . $user->email);
-
-                $emailContent = [
-                    'auctionTitle' => $auction->title,
-                    'bidAmount' => $highestBid->bid_amount,
-                    'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id . '&userId=' . $highestBid->user_id,
-                ];
-
-                $htmlContent = 'Dear ' . $user->name . ',<br><br>'
-                    . 'We are excited to inform you that you have won the auction for: <strong>' . $emailContent['auctionTitle'] . '</strong>!<br>'
-                    . 'Your winning bid amount is: $' . number_format($emailContent['bidAmount'], 2) . '.<br><br>'
-                    . 'To finalize your payment, please click the link below:<br>'
-                    . '<a href="' . $emailContent['paymentLink'] . '">Make Payment</a><br><br>'
-                    . 'Thank you for your participation, and we look forward to seeing you in future auctions!<br>'
-                    . 'Best regards,<br>'
-                    . 'The Auction Team';
-
-                try {
-                    Mail::send([], [], function ($message) use ($user, $htmlContent) {
-                        $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
-                            ->to($user->email)
-                            ->subject('Auction Winner Notification')
-                            ->html($htmlContent); // Use html() to send HTML content
-                    });
-
-                    Log::info('Email sent successfully to: ' . $user->email);
-                } catch (\Exception $e) {
-                    Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
+                // Notify losing bidders
+                foreach ($losingBids as $bid) {
+                    $this->notifyLosingBidder($auction, $bid);
                 }
             } else {
                 Log::info('No bids found for auction ID ' . $auction->id);
@@ -75,5 +51,79 @@ class CheckAuctionStatus extends Command
 
         Log::info('Auction status check completed');
         return Command::SUCCESS;
+    }
+
+    // Notify the highest bidder
+    protected function notifyHighestBidder($auction, $highestBid)
+    {
+        $user = $highestBid->user;
+
+        if (empty($user->email)) {
+            Log::error('User with ID ' . $user->id . ' has no email address.');
+            return;
+        }
+
+        Log::info('Attempting to send email to: ' . $user->email);
+
+        $emailContent = [
+            'auctionTitle' => $auction->title,
+            'bidAmount' => $highestBid->bid_amount,
+            'paymentLink' => 'http://localhost:4200/auction-payment?auctionId=' . $auction->id . '&userId=' . $highestBid->user_id,
+        ];
+
+        $htmlContent = 'Dear ' . $user->name . ',<br><br>'
+            . 'Congratulations! You have won the auction for: <strong>' . $emailContent['auctionTitle'] . '</strong>!<br>'
+            . 'Your winning bid amount is: $' . number_format($emailContent['bidAmount'], 2) . '.<br><br>'
+            . 'To finalize your payment, please click the link below:<br>'
+            . '<a href="' . $emailContent['paymentLink'] . '">Make Payment</a><br><br>'
+            . 'Thank you for your participation, and we look forward to seeing you in future auctions!<br>'
+            . 'Best regards,<br>'
+            . 'The Auction Team';
+
+        try {
+            Mail::send([], [], function ($message) use ($user, $htmlContent) {
+                $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                    ->to($user->email)
+                    ->subject('Auction Winner Notification')
+                    ->html($htmlContent);
+            });
+
+            Log::info('Email sent successfully to: ' . $user->email);
+        } catch (\Exception $e) {
+            Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
+        }
+    }
+
+    // Notify losing bidders
+    protected function notifyLosingBidder($auction, $bid)
+    {
+        $user = $bid->user;
+
+        if (empty($user->email)) {
+            Log::error('User with ID ' . $user->id . ' has no email address.');
+            return;
+        }
+
+        Log::info('Attempting to send email to losing bidder: ' . $user->email);
+
+        $htmlContent = 'Dear ' . $user->name . ',<br><br>'
+            . 'Thank you for participating in the auction for: <strong>' . $auction->title . '</strong>.<br>'
+            . 'Unfortunately, your bid was not the highest.<br><br>'
+            . 'We encourage you to participate in future auctions for more chances to win.<br>'
+            . 'Best regards,<br>'
+            . 'The Auction Team';
+
+        try {
+            Mail::send([], [], function ($message) use ($user, $htmlContent) {
+                $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
+                    ->to($user->email)
+                    ->subject('Auction Participation Notification')
+                    ->html($htmlContent);
+            });
+
+            Log::info('Losing bidder email sent successfully to: ' . $user->email);
+        } catch (\Exception $e) {
+            Log::error('Failed to send email to: ' . $user->email . '. Error: ' . $e->getMessage());
+        }
     }
 }
