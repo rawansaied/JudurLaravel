@@ -235,6 +235,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/donor/dashboard', [DonorController::class, 'dashboard'])->name('donor.dashboard');
 });
+Route::delete('/comments/{commentId}', [CommentController::class, 'deleteComment']);
 
 
 Route::get('/send-test-email', function () {
@@ -307,6 +308,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->post('/feedback', [FeedbackController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/feedback', [FeedbackController::class, 'index']);
+Route::middleware('auth:sanctum')->delete('/feedbacks/{id}', [FeedbackController::class, 'destroy']);
+
 
 
 
