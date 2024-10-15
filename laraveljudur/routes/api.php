@@ -86,6 +86,8 @@ Route::put('/examiner-reports/report-details/{id}/status', [LandController::clas
 //     return 'Event broadcasted!';
 // });
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
+Route::get('/event/{id}/qr-code', [EventController::class, 'getQrCode'])->name('generate.qr.code');
+
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
 Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
@@ -153,7 +155,7 @@ Route::get('/user', function (Request $request) {
 
 
 Route::get('/events', [EventController::class, 'index']);
-Route::get('/events/{id}', [EventController::class, 'show']);
+Route::get('/events/{id}', [EventController::class, 'show'])->name('event.details');
 
 // Register a new user
 Route::post('/register', [AuthController::class, 'register']);
