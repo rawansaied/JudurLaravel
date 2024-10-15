@@ -315,7 +315,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-
 Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
@@ -331,10 +330,18 @@ Route::post('/forgot-password', function (Request $request) {
     // Generate the reset link
     $resetLink = "http://localhost:4200/reset-password?token={$token}&email={$request->email}";
 
-    // Send the reset link email using Mail::to() directly
-    Mail::raw("Click here to reset your password: {$resetLink}", function ($message) use ($request) {
+    // Updated email content
+    $emailContent = "Hello,\n\n"
+        . "You recently requested to reset your password for your account. Click the link below to reset it:\n\n"
+        . "{$resetLink}\n\n"
+        . "If you did not request a password reset, please ignore this email or contact support if you have questions.\n\n"
+        . "Thank you,\n"
+        . "The Judur Team";
+
+    // Send the reset link email using Mail::raw() with updated content
+    Mail::raw($emailContent, function ($message) use ($request) {
         $message->to($request->email)
-            ->subject('Password Reset');
+            ->subject('Password Reset Request');
     });
 
     return response()->json(['message' => 'Reset link sent to your email.'], 200);
