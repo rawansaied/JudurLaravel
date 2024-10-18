@@ -92,6 +92,7 @@ Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', 
 
 Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SMSController;
 
 // Your routes/api.php
 //////////working
@@ -429,3 +430,11 @@ Route::get('/email', [AuctionController::class, 'Email']);
 // Route::get('/email', [AuctionController::class, 'Email']);
 
 Route::middleware('auth:sanctum')->post('/notifications/{id}/mark-as-read', [VolunteerAnalyticsController::class, 'toggleReadStatus']);
+
+
+
+Route::post('/receive-sms', [SMSController::class, 'receiveSMS']);
+
+Route::get('event/{id}/share/facebook', [EventController::class, 'shareOnFacebook']);
+Route::get('event/{id}/share/instagram', [EventController::class, 'shareOnInstagram']);
+
