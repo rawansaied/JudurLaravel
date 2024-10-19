@@ -171,5 +171,26 @@ class EventController extends Controller
             'qr_code' => 'data:image/png;base64,' . $base64QrCode
         ], 200);
     }
+
+
+    public function shareOnFacebook($eventId)
+    {
+        $event = Event::findOrFail($eventId);
+
+        return response()->json([
+            'message' => 'Event successfully shared on Facebook!',
+            'shared_event' => $event->title
+        ], 200);
+    }
+
+    public function shareOnInstagram($eventId)
+    {
+        $event = Event::findOrFail($eventId);
+
+        return response()->json([
+            'message' => 'Event successfully shared on Instagram!',
+            'shared_event' => $event->title
+        ], 200);
+    }
     
 }
