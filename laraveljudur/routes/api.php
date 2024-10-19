@@ -163,7 +163,13 @@ Route::post('/register/donor', [AuthController::class, 'registerDonor']);
 Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 // Login a user
 
- Route::post('/login', [AuthController::class, 'login']);
+
+//  Route::get('/login/google', [AuthController::class, 'redirectToGoogle']);
+// Route::get('auth/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::post('/login', [AuthController::class, 'login']);
+// Route::get('/login/github', [AuthController::class, 'redirectToProvider']);
+// Route::get('/login/github/callback', [AuthController::class, 'handleProviderCallback']);
+
 
 
 

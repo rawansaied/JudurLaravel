@@ -314,7 +314,7 @@ class DonationController extends Controller
     
         $validated = $request->validate([
             'auction_id' => 'required|integer',
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric',
             'currency' => 'required|string',
             'payment_method' => 'string',
         ]);
