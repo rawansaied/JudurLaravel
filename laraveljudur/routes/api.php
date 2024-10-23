@@ -164,7 +164,13 @@ Route::post('/register/donor', [AuthController::class, 'registerDonor']);
 Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 // Login a user
 
- Route::post('/login', [AuthController::class, 'login']);
+
+//  Route::get('/login/google', [AuthController::class, 'redirectToGoogle']);
+// Route::get('auth/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::post('/login', [AuthController::class, 'login']);
+// Route::get('/login/github', [AuthController::class, 'redirectToProvider']);
+// Route::get('/login/github/callback', [AuthController::class, 'handleProviderCallback']);
+
 
 
 
@@ -437,4 +443,12 @@ Route::post('/receive-sms', [SMSController::class, 'receiveSMS']);
 
 Route::get('event/{id}/share/facebook', [EventController::class, 'shareOnFacebook']);
 Route::get('event/{id}/share/instagram', [EventController::class, 'shareOnInstagram']);
+use App\Http\Controllers\FundraisingCampaignController;
 
+Route::middleware('auth:sanctum')->post('/campaigns/create', [FundraisingCampaignController::class, 'createCampaign']);
+Route::get('/campaigns', [FundraisingCampaignController::class, 'viewCampaigns']);
+Route::middleware('auth:sanctum')->post('/campaigns/{id}/donate', [FundraisingCampaignController::class, 'donateToCampaign']);
+Route::post('/campaigns/{id}/payment-intent', [FundraisingCampaignController::class, 'createPaymentIntent']); // Add this line
+use App\Http\Controllers\ChatbotController;
+
+Route::post('/chatbot', [ChatbotController::class, 'respond']);

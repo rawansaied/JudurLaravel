@@ -11,6 +11,7 @@ use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
+  
     /**
      * Register any application services.
      */

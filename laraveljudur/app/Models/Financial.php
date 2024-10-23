@@ -20,4 +20,8 @@ class Financial extends Model
     {
         return $this->belongsTo(Donor::class);
     }
+    public function campaign()
+    {
+        return $this->belongsTo(FundraisingCampaign::class, 'campaign_id');
+    }
 }
