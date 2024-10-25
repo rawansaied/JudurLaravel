@@ -201,12 +201,10 @@ Route::post('/contact', [ContactUsController::class, 'store']);
 // Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
 // Route::get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 // Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
-Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
+// Route::post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
 Route::middleware('auth:sanctum')->get('/completed-auctions', [AuctionController::class, 'getCompletedAuctions']);
 Route::get('/auctions/{id}/highest-bid', [AuctionController::class, 'getHighestBid']);
-
-
-
+Route::middleware('auth:sanctum')->post('/auction/{auctionId}/complete', [BidController::class, 'completeAuction']);
 
 
 
