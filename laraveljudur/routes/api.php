@@ -86,10 +86,13 @@ Route::put('/examiner-reports/report-details/{id}/status', [LandController::clas
 //     return 'Event broadcasted!';
 // });
 Route::middleware('auth:sanctum')->post('/list-event/join-event', [EventController::class, 'joinEvent']);
+Route::get('/event/{id}/qr-code', [EventController::class, 'getQrCode'])->name('generate.qr.code');
+
 Route::middleware('auth:sanctum')->delete('/list-event/cancel-event/{eventId}', [EventController::class, 'cancelEvent']);
 
 Route::middleware('auth:sanctum')->get('events/{eventId}/is-joined', [EventController::class, 'isVolunteerJoined']);
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SMSController;
 
 // Your routes/api.php
 //////////working
@@ -153,7 +156,7 @@ Route::get('/user', function (Request $request) {
 
 
 Route::get('/events', [EventController::class, 'index']);
-Route::get('/events/{id}', [EventController::class, 'show']);
+Route::get('/events/{id}', [EventController::class, 'show'])->name('event.details');
 
 // Register a new user
 Route::post('/register', [AuthController::class, 'register']);
@@ -161,7 +164,13 @@ Route::post('/register/donor', [AuthController::class, 'registerDonor']);
 Route::post('/register/volunteer', [AuthController::class, 'registerVolunteer']);
 // Login a user
 
- Route::post('/login', [AuthController::class, 'login']);
+
+//  Route::get('/login/google', [AuthController::class, 'redirectToGoogle']);
+// Route::get('auth/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::post('/login', [AuthController::class, 'login']);
+// Route::get('/login/github', [AuthController::class, 'redirectToProvider']);
+// Route::get('/login/github/callback', [AuthController::class, 'handleProviderCallback']);
+
 
 
 
@@ -432,3 +441,19 @@ Route::get('/email', [AuctionController::class, 'Email']);
 // Route::get('/email', [AuctionController::class, 'Email']);
 
 Route::middleware('auth:sanctum')->post('/notifications/{id}/mark-as-read', [VolunteerAnalyticsController::class, 'toggleReadStatus']);
+
+
+
+Route::post('/receive-sms', [SMSController::class, 'receiveSMS']);
+
+Route::get('event/{id}/share/facebook', [EventController::class, 'shareOnFacebook']);
+Route::get('event/{id}/share/instagram', [EventController::class, 'shareOnInstagram']);
+use App\Http\Controllers\FundraisingCampaignController;
+
+Route::middleware('auth:sanctum')->post('/campaigns/create', [FundraisingCampaignController::class, 'createCampaign']);
+Route::get('/campaigns', [FundraisingCampaignController::class, 'viewCampaigns']);
+Route::middleware('auth:sanctum')->post('/campaigns/{id}/donate', [FundraisingCampaignController::class, 'donateToCampaign']);
+Route::post('/campaigns/{id}/payment-intent', [FundraisingCampaignController::class, 'createPaymentIntent']); // Add this line
+use App\Http\Controllers\ChatbotController;
+
+Route::post('/chatbot', [ChatbotController::class, 'respond']);

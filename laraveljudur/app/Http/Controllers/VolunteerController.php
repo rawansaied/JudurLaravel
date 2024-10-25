@@ -14,10 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class VolunteerController extends Controller
 {
-    // Method to check if the volunteer has already made a request to become an examiner
     public function checkExaminerRequest()
 {
-    // Find the currently logged-in volunteer
     $volunteer = Volunteer::where('user_id', Auth::id())->first();
     
     if ($volunteer && $volunteer->examiner_request_made) {
@@ -38,14 +36,12 @@ public function requestExaminer(Request $request)
 {
     Log::info('RequestExaminer invoked', ['user_id' => Auth::id()]);
 
-    // Find the currently logged-in volunteer
     $volunteer = Volunteer::where('user_id', Auth::id())->first();
 
     if (!$volunteer) {
         return response()->json(['error' => 'Volunteer not found.'], 404);
     }
 
-    // Validate the incoming request
     $request->validate([
         'fullName' => 'required|string|max:255',
         'email' => 'required|email',
@@ -55,7 +51,6 @@ public function requestExaminer(Request $request)
         'nonProfitAwareness' => 'required|boolean'
     ]);
 
-    // Check if the volunteer has already made a request
     if ($volunteer->examiner_request_made) {
         Log::info('Examiner request already made', ['user_id' => Auth::id()]);
         return response()->json(['message' => 'You have already made a request to become an examiner.'], 400);

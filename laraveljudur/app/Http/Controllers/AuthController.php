@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Donor;
 use App\Models\Notification;
 use App\Models\Volunteer;
+use Exception;
 use Illuminate\Support\Facades\DB;  
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -230,6 +232,66 @@ class AuthController extends Controller
         }
     }
 
+
+
+//     public function redirectToGoogle()
+//     {
+//         return Socialite::driver('google')->redirect();
+//     }
+
+//     public function handleGoogleCallback(Request $request)
+//     {
+//         try {
+//             $user = Socialite::driver('google')->user();
+//             $findUser = User::where('google_id', $user->id)->first();
+
+//             if ($findUser) {
+//                 Auth::login($findUser);
+//                 return response()->json(['message' => 'Login successful', 'user' => $findUser]);
+//             } else {
+//                 $newUser = User::create([
+//                     'name' => $user->name,
+//                     'email' => $user->email,
+//                     'google_id' => $user->id,
+//                     'password' => bcrypt('dummy_password')
+//                 ]);
+
+//                 Auth::login($newUser);
+//                 return response()->json(['message' => 'User created and logged in', 'user' => $newUser]);
+//             }
+//         } catch (\Exception $e) {
+//             return response()->json(['error' => $e->getMessage()], 500);
+//         }
+//     }
+
+//     public function redirectToProvider()
+// {
+//     return Socialite::driver('github')->redirect();
+// }
+
+// public function handleProviderCallback()
+// {
+//     $githubUser = Socialite::driver('github')->user();
+
+//     if (!$githubUser) {
+//         return response()->json(['error' => 'GitHub authentication failed.'], 401);
+//     }
+
+//     $user = User::firstOrCreate(
+//         ['github_id' => $githubUser->getId()],
+//         [
+//             'name' => $githubUser->getName(),
+//             'email' => $githubUser->getEmail(),
+//             'avatar' => $githubUser->getAvatar(),
+//         ]
+//     );
+
+//     Auth::login($user);
+    
+//     $token = $user->createToken('auth_token')->plainTextToken;
+
+//     return redirect()->to(env('FRONTEND_URL') . '/login-success?token=' . $token);
+// }
 
     
 }

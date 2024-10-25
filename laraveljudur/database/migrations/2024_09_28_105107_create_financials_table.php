@@ -17,6 +17,8 @@ class CreateFinancialsTable extends Migration
             $table->timestamps();
 
             $table->foreign('donor_id')->references('id')->on('donors');
+            $table->unsignedBigInteger('campaign_id')->nullable();
+            $table->foreign('campaign_id')->references('id')->on('fundraising_campaigns');
         });
     }
 
@@ -24,6 +26,4 @@ class CreateFinancialsTable extends Migration
     {
         Schema::dropIfExists('financials');
     }
-}
-
-;
+};
