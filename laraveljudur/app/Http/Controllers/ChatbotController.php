@@ -25,9 +25,7 @@ class ChatbotController extends Controller
             return response()->json(['answer' => $faqResponse]);
         }
 
-        // Get response from ChatbotService
         $response = $this->chatbotService->getChatbotResponse($userMessage);
-
         return response()->json(['answer' => $response]);
     }
 
