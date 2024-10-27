@@ -33,6 +33,8 @@ class ChatbotController extends Controller
 
     protected function checkFAQ($message)
 {
+    $message = strtolower($message);
+
     $faqs = [
         'How can I register on the Judur platform?' => 'You can register on the Judur platform by visiting the registration page and creating an account. During registration, you will select your role: Provider, Donor, Landowner, or Volunteer. After completing the registration form, your account will be verified by an Admin to ensure authenticity.',
         
@@ -80,9 +82,24 @@ class ChatbotController extends Controller
         
         'What measures does Judur take to ensure the safety and quality of donations?' => 'Judur implements several measures, including rigorous verification of donations, inspection of donated spaces, and evaluations of food and goods quality, to ensure that all resources provided are safe and suitable for distribution.',
         
-        'How can I contact support if I have issues or questions?' => 'Users can contact Judur support through the "Contact Us" section on the website. Alternatively, you can reach out via email or through the support form, and a team member will respond promptly to assist you.'
+        'How can I contact support if I have issues or questions?' => 'Users can contact Judur support through the "Contact Us" section on the website. Alternatively, you can reach out via email or through the support form, and a team member will respond promptly to assist you.',
+
+        'What is Judur?' => 'Judur is a charitable platform that connects donors, providers, landowners, and volunteers to facilitate large-scale feeding events and donations for those in need.',
+    
+        'Who can use the Judur platform?' => 'The platform is open to Providers, Donors, Landowners, and Volunteers who wish to contribute to feeding programs and other charitable initiatives.',
+        
+        'How can I reset my password?' => 'You can reset your password by visiting the "Forgot Password" page and following the instructions to receive a reset link via email.',
+        
+        'Is there an app for Judur?' => 'Currently, Judur is accessible through its web platform. However, we are working on developing a mobile app for easier access in the future.',
+                
+        'How can I update my account information?' => 'You can update your account information by logging in and navigating to your profile settings. From there, you can edit your details and save the changes.'
     ];
 
+    foreach ($faqs as $key => $answer) {
+        if (strtolower($key) === $message) {
+            return $answer;
+        }
+    }
     return $faqs[$message] ?? null; 
 }
 
