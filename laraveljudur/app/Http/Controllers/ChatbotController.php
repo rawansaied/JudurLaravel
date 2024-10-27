@@ -9,33 +9,7 @@ class ChatbotController extends Controller
 {
     protected $chatbotService;
 
-    public function __construct(ChatbotService $chatbotService)
-    {
-        $this->chatbotService = $chatbotService;
-    }
-
-    public function respond(Request $request)
-    {
-        $request->validate(['message' => 'required|string']);
-
-        $userMessage = $request->input('message');
-        // Check FAQs first
-        $faqResponse = $this->checkFAQ($userMessage);
-        if ($faqResponse) {
-            return response()->json(['answer' => $faqResponse]);
-        }
-
-        // Get response from ChatbotService
-        $response = $this->chatbotService->getChatbotResponse($userMessage);
-
-        return response()->json(['answer' => $response]);
-    }
-
-    protected function checkFAQ($message)
-{
-    $message = strtolower($message);
-
-    $faqs = [
+    protected $faqs = [
         'How can I register on the Judur platform?' => 'You can register on the Judur platform by visiting the registration page and creating an account. During registration, you will select your role: Provider, Donor, Landowner, or Volunteer. After completing the registration form, your account will be verified by an Admin to ensure authenticity.',
         
         'What types of donations do you accept?' => 'We accept a variety of donations, including large-scale food supplies, clothing, valuable items, personal items, and spaces for feeding events. Providers typically donate substantial items in bulk, while Donors can contribute smaller items such as personal goods or valuable auction items.',
@@ -94,13 +68,132 @@ class ChatbotController extends Controller
                 
         'How can I update my account information?' => 'You can update your account information by logging in and navigating to your profile settings. From there, you can edit your details and save the changes.'
     ];
-
-    foreach ($faqs as $key => $answer) {
-        if (strtolower($key) === $message) {
-            return $answer;
-        }
+    
+    protected $faqKeywords = [
+        'How can I register on the Judur platform?' => ['register', 'account', 'roles', 'provider', 'donor', 'landowner', 'volunteer', 'verification', 'admin'],
+        
+        'What types of donations do you accept?' => ['donations', 'types', 'items', 'food', 'clothing', 'personal', 'spaces', 'auction'],
+        
+        'Can I donate valuable items for auction?' => ['auction', 'valuable', 'donate', 'antiques', 'electronics', 'high-value', 'charity', 'proceeds'],
+        
+        'How do I submit a donation as a Provider or Donor?' => ['submit', 'donation', 'provider', 'donor', 'form', 'quantity', 'condition', 'auction'],
+        
+        'How do auctions work on the platform?' => ['auction', 'bidding', 'users', 'highest bidder', 'feeding programs', 'charity', 'support'],
+        
+        'What role do Landowners play in the Judur platform?' => ['landowner', 'spaces', 'property', 'facilities', 'capacity', 'admin', 'examiner'],
+        
+        'What is the role of Examiners in Judur?' => ['examiner', 'volunteer', 'assessment', 'suitability', 'capacity', 'safety', 'report', 'approval'],
+        
+        'How can I volunteer for events?' => ['volunteer', 'events', 'dashboard', 'assignments', 'distribution', 'organize', 'feeding'],
+        
+        'How do I track the impact of my donation?' => ['track', 'impact', 'dashboard', 'providers', 'donors', 'landowners', 'updates', 'events', 'feedback'],
+        
+        'Can I see where the funds from my donation or auction were used?' => ['funds', 'donation', 'auction', 'allocation', 'feeding', 'transparency', 'financial reports'],
+        
+        'How can I participate in an auction?' => ['participate', 'auction', 'verified', 'bidding', 'access', 'outcomes'],
+        
+        'How does Judur ensure donations are used appropriately?' => ['ensure', 'appropriate use', 'admins', 'donations', 'review', 'properties', 'examiners', 'reports'],
+        
+        'What payment methods are available for auctions?' => ['payment', 'methods', 'paypal', 'credit card', 'secure', 'processing'],
+        
+        'Can I export data or reports about my donations and auctions?' => ['export', 'data', 'reports', 'donations', 'auctions', 'financial summaries', 'laravel excel', 'CSV', 'excel', 'pdf'],
+        
+        'How can I stay updated on the status of my donation or event?' => ['real-time notifications', 'updates', 'donation status', 'events', 'dashboard', 'email'],
+        
+        'How does Judur verify the authenticity of users?' => ['verify', 'authenticity', 'users', 'registration', 'admin review', 'prevention', 'fraud'],
+        
+        'What kind of feedback can I provide as a user?' => ['feedback', 'experience', 'donation process', 'events', 'platform', 'user experience'],
+        
+        'Is there a limit to how many items I can donate?' => ['limit', 'items', 'donation', 'providers', 'donors', 'review', 'practicality'],
+        
+        'What happens to unsold auction items?' => ['unsold', 'auction', 'relist', 'future auction', 'charity', 'return', 'donor'],
+        
+        'Are there any fees associated with using the Judur platform?' => ['fees', 'usage', 'donation', 'auction', 'operational costs', 'percentage'],
+        
+        'How can I get involved in organizing feeding events?' => ['organize', 'feeding events', 'volunteer', 'interest', 'experience', 'assignments', 'tasks'],
+        
+        'Can organizations collaborate with Judur for donations?' => ['organizations', 'collaborate', 'donations', 'charitable initiatives', 'providers', 'landowners', 'impact'],
+        
+        'What measures does Judur take to ensure the safety and quality of donations?' => ['safety', 'quality', 'verification', 'inspection', 'food', 'goods', 'distribution'],
+        
+        'How can I contact support if I have issues or questions?' => ['support', 'contact', 'issues', 'questions', 'email', 'form', 'assistance'],
+    ];
+    
+    public function __construct(ChatbotService $chatbotService)
+    {
+        $this->chatbotService = $chatbotService;
     }
-    return $faqs[$message] ?? null; 
-}
 
+    public function respond(Request $request)
+    {
+        $userMessage = $request->input('message', '');
+
+        if (empty($userMessage)) {
+            $nextQuestions = $this->getNextFAQs();
+            return response()->json([
+                'answer' => 'Hello! How can I assist you today?', 
+                'suggestions' => $nextQuestions
+            ]);
+        }
+
+        // Check if the message matches any FAQ
+        $faqResponse = $this->checkFAQ($userMessage);
+        if ($faqResponse) {
+            // If matched, suggest related questions
+            $nextQuestions = $this->getNextFAQs($userMessage);
+            return response()->json([
+                'answer' => $faqResponse, 
+                'suggestions' => $nextQuestions
+            ]);
+        }
+
+        // If not an FAQ, get chatbot response
+        $response = $this->chatbotService->getChatbotResponse($userMessage);
+
+        return response()->json([
+            'answer' => $response, 
+            'suggestions' => $this->getNextFAQs()
+        ]);
+    }
+
+    protected function checkFAQ($message)
+    {
+        // Simple keyword-based matching
+        foreach ($this->faqs as $question => $answer) {
+            foreach ($this->faqKeywords[$question] as $keyword) {
+                if (stripos($message, $keyword) !== false) {
+                    return $answer;
+                }
+            }
+        }
+        return null;
+    }
+
+    protected function getNextFAQs($currentQuestion = null)
+    {
+        if (!$currentQuestion || !isset($this->faqKeywords[$currentQuestion])) {
+            // Fallback to default suggestions if no current question context is found
+            return array_slice(array_keys($this->faqs), 0, 3);
+        }
+
+        $currentKeywords = $this->faqKeywords[$currentQuestion];
+        $relatedQuestions = [];
+
+        foreach ($this->faqs as $question => $answer) {
+            if ($question !== $currentQuestion && isset($this->faqKeywords[$question])) {
+                // Check for overlapping keywords
+                if (count(array_intersect($currentKeywords, $this->faqKeywords[$question])) > 0) {
+                    $relatedQuestions[] = $question;
+                }
+            }
+        }
+
+        // Return related questions, or fallback to first three FAQs
+        $suggestions = array_slice($relatedQuestions, 0, 3);
+        if (count($suggestions) < 3) {
+            $suggestions = array_merge($suggestions, array_slice(array_keys($this->faqs), 0, 3 - count($suggestions)));
+        }
+
+        return $suggestions;
+    }
 }
