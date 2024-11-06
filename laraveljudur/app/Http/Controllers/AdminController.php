@@ -227,20 +227,48 @@ public function createEvent(Request $request)
     Log::info('Create Event Called', ['request' => $request->all()]);
 
     $validatedData = $request->validate([
-        'title' => 'required|string|max:255',
+        'title' => 'required|max:255',
         'land_id' => 'required|integer',
-        'location' => 'required|string|max:255',
+        'location' => 'required|max:255',
         'date' => 'required|date',
         'time' => 'required',
         'expected_organizer_number' => 'required|integer|min:1',
         'allocatedMoney' => 'nullable|integer|min:0',
         'allocatedItems' => 'nullable|integer|min:0',
         'event_status' => 'required|integer|in:1,2,3,4',
-        'description' => 'required|string',
+        'description' => 'required',
         'duration' => 'nullable|integer|min:0',
         'people_helped' => 'nullable|integer|min:0',
         'goods_distributed' => 'nullable|integer|min:0',
         'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ], [
+        'title.required' => 'The event title is required.',
+        'title.max' => 'The event title cannot exceed 255 characters.',
+        'land_id.required' => 'Please select a land for the event.',
+        'location.required' => 'The location is required.',
+        'location.max' => 'The location cannot exceed 255 characters.',
+        'date.required' => 'The event date is required.',
+        'date.date' => 'Please provide a valid date.',
+        'time.required' => 'The event time is required.',
+        'expected_organizer_number.required' => 'Please specify the expected number of organizers.',
+        'expected_organizer_number.integer' => 'Expected organizers must be a number.',
+        'expected_organizer_number.min' => 'The number of organizers must be at least 1.',
+        'allocatedMoney.integer' => 'Allocated money must be a valid number.',
+        'allocatedMoney.min' => 'Allocated money cannot be less than 0.',
+        'allocatedItems.integer' => 'Allocated items must be a valid number.',
+        'allocatedItems.min' => 'Allocated items cannot be less than 0.',
+        'event_status.required' => 'Event status is required.',
+        'event_status.in' => 'Invalid event status selected.',
+        'description.required' => 'A description for the event is required.',
+        'duration.integer' => 'Duration must be a valid number.',
+        'duration.min' => 'Duration cannot be less than 0.',
+        'people_helped.integer' => 'The number of people helped must be a valid number.',
+        'people_helped.min' => 'The number of people helped cannot be less than 0.',
+        'goods_distributed.integer' => 'Goods distributed must be a valid number.',
+        'goods_distributed.min' => 'Goods distributed cannot be less than 0.',
+        'image.image' => 'The uploaded file must be an image.',
+        'image.mimes' => 'The image must be a file of type: jpg, jpeg, png.',
+        'image.max' => 'The image size cannot exceed 2MB.',
     ]);
 
     $treasury = Treasury::where('id', 1)->first();
@@ -249,10 +277,10 @@ public function createEvent(Request $request)
     $old_items = $inventory->items;
 
     if ($request->allocatedMoney > $old_money) {
-        return response()->json(['error' => 'Insufficient funds in the treasury'], 400);
+        return response()->json(['errors' => ['allocatedMoney' => ['Insufficient funds in the treasury']]], 422);
     }
     if ($request->allocatedItems > $old_items) {
-        return response()->json(['error' => 'Insufficient Wuantity in the Inventory'], 400);
+        return response()->json(['errors' => ['allocatedItems' => ['Insufficient quantity in the inventory']]], 422);
     }
 
     $event = new Event();
@@ -281,12 +309,14 @@ public function createEvent(Request $request)
     } else {
         return response()->json(['message' => 'Failed to create event'], 500);
     }
-    $users = User::all();  // You can also target specific users
+
+    $users = User::all();
     foreach ($users as $user) {
         $user->notify(new EventNotification());
     }
     broadcast(new EventCreated());
 }
+
 
 
 
@@ -307,6 +337,20 @@ public function editEvent(Request $request, $id)
         'people_helped' => 'nullable|integer|min:0',
         'goods_distributed' => 'nullable|min:0',
         'image' => 'nullable|string', 
+    ], [
+        'title.required' => 'Event title is required.',
+        'land_id.required' => 'Please select a land.',
+        'location.required' => 'Event location is required.',
+        'date.required' => 'Event date is required.',
+        'time.required' => 'Event time is required.',
+        'expected_organizer_number.required' => 'Expected organizer number is required and must be at least 1.',
+        'allocatedMoney.min' => 'Allocated money must be 0 or more.',
+        'allocatedItems.min' => 'Allocated items must be 0 or more.',
+        'event_status.required' => 'Please select an event status.',
+        'description.required' => 'Event description is required.',
+        'duration.min' => 'Event duration must be 0 or more.',
+        'people_helped.min' => 'People helped must be 0 or more.',
+        'goods_distributed.min' => 'Goods distributed must be 0 or more.',
     ]);
 
     $event = Event::findOrFail($id);
@@ -321,10 +365,10 @@ public function editEvent(Request $request, $id)
     $oldItem += $old_value_items;
 
     if ($request->allocatedMoney > $old_money) {
-        return response()->json(['error' => 'Insufficient funds in the treasury'], 400);
+        return response()->json(['errors' => ['allocatedMoney' => ['Insufficient funds in the treasury']]], 422);
     }
     if ($request->allocatedItems > $oldItem) {
-        return response()->json(['error' => 'Insufficient quantity in the Inventory'], 400);
+        return response()->json(['errors' => ['allocatedItems' => ['Insufficient quantity in the inventory']]], 422);
     }
 
 
@@ -343,7 +387,7 @@ public function editEvent(Request $request, $id)
             $imageType = strtolower($type[1]);
             
             if (!in_array($imageType, ['jpg', 'jpeg', 'png', 'gif'])) {
-                return response()->json(['error' => 'Invalid image type'], 422);
+                return response()->json(['errors' => ['image' => ['Invalid Image Type']]], 422);
             }
 
             $imageData = substr($imageData, strpos($imageData, ',') + 1);
@@ -358,7 +402,7 @@ public function editEvent(Request $request, $id)
 
             $event->image = 'images/' . $imageName;
         } else {
-            return response()->json(['error' => 'Invalid image format'], 422);
+            return response()->json(['errors' => ['image' => ['Invalid Image Type']]], 422);
         }
     }
 
