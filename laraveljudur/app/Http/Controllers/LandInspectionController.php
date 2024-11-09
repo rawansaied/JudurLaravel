@@ -117,27 +117,21 @@ class LandInspectionController extends Controller
 
     public function getLands()
     {
-        // Find the status 'Pending'
         $pendingStatus = LandStatus::where('name', 'Pending')->first();
     
-        // Check if the 'Pending' status exists
         if (!$pendingStatus) {
             return response()->json(['error' => 'Pending status not found.'], 500);
         }
     
-        // Get the current date
         $currentDate = Carbon::now()->toDateString();
     
-        // Retrieve lands that have 'Pending' status and availability_time in the future
         $lands = Land::where('status_id', $pendingStatus->id)
                     ->where('availability_time', '>', $currentDate)
                     ->get();
     
         return response()->json($lands);
     }
-    /**
-     * Remove the specified resource from storage.
-     */
+
     public function destroy($id)
     {
         $report = LandInspection::find($id);
@@ -146,7 +140,6 @@ class LandInspectionController extends Controller
             return response()->json(['message' => 'Report not found'], 404);
         }
 
-        // Optional: Handle any relationships if necessary, e.g. cascade delete
 
         $report->delete();
         return response()->json(['message' => 'Report deleted successfully'], 200);
