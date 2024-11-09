@@ -65,7 +65,16 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
             'age' => 'required|integer',
             'phone' => 'required|string',
-            'profile_picture' => 'nullable|string', 
+            'profile_picture' => [
+            'nullable',
+            'string',
+            function ($attribute, $value, $fail) {
+                $data = explode(';', $value);
+                if (count($data) < 2 || !str_starts_with($data[0], 'data:image/jpeg') && !str_starts_with($data[0], 'data:image/png')) {
+                    return $fail('The profile picture must be a valid JPEG or PNG image.');
+                }
+            }
+        ]
         ]);
     
         DB::beginTransaction();

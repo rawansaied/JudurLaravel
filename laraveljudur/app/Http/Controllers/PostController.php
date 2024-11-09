@@ -42,55 +42,79 @@ class PostController extends Controller
         $request->validate([
             'title' => 'required|string',
             'image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
-
         ]);
-
+    
         $postData = $request->all();
-
-        // Handle image upload
+    
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('images', 'public');
-            $postData['image'] = $imagePath; // Store the path
+            $postData['image'] = $imagePath; 
+        }else {
+            $placeholderImage = 'placeholder.jpg'; 
+            $placeholderPath = storage_path('app/public/uploads/' . $placeholderImage);
+    
+            if (!file_exists($placeholderPath)) {
+                $placeholderImageContent = file_get_contents('https://via.placeholder.com/150');
+    
+                file_put_contents($placeholderPath, $placeholderImageContent);
+            }
+    
+            $postData['image'] = 'uploads/' . $placeholderImage;
         }
-
+    
         $post = Post::create($postData);
+    
         return response()->json($post, 201);
     }
+    
+    
 
     public function update(Request $request, $id)
     {
-        // Validate the input fields
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'category' => 'required|string',
-            'image' => 'nullable|string'
+            'image' => 'nullable|string', 
         ]);
-
-        // Fetch the post
+    
         $post = Post::findOrFail($id);
         $post->title = $request->input('title');
         $post->content = $request->input('content');
         $post->category = $request->input('category');
-
-
-        if ($request->image) {
-            // Extract the image data
+    
+        if ($request->has('image') && $request->input('image')) {
             $imageData = $request->input('image');
-            // Decode the image (removing the data:image/jpeg;base64, part)
-            $imageData = explode(',', $imageData)[1];
+            $imageData = explode(',', $imageData)[1]; 
             $imageName = time() . '.jpg';
             Storage::disk('public')->put('uploads/' . $imageName, base64_decode($imageData));
-
-            // Save the file path to the database
+    
+            
             $post->image = 'uploads/' . $imageName;
+        } else {
+            
+            $placeholderImage = 'placeholder.jpg'; 
+            $placeholderPath = storage_path('app/public/uploads/' . $placeholderImage);
+    
+            
+            if (!file_exists($placeholderPath)) {
+            
+                $placeholderImageContent = file_get_contents('https://via.placeholder.com/150');
+    
+            
+                file_put_contents($placeholderPath, $placeholderImageContent);
+            }
+    
+            
+            $post->image = 'uploads/' . $placeholderImage;
         }
-
-        // Save the post
+    
         $post->save();
-
+    
         return response()->json($post, 200);
     }
+    
+    
 
 
     public function destroy($id)

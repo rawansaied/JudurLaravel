@@ -336,7 +336,7 @@ public function editEvent(Request $request, $id)
         'duration' => 'nullable|integer|min:0',
         'people_helped' => 'nullable|integer|min:0',
         'goods_distributed' => 'nullable|min:0',
-        'image' => 'nullable|string', 
+        'image' => 'nullable|string',
     ], [
         'title.required' => 'Event title is required.',
         'land_id.required' => 'Please select a land.',
@@ -371,7 +371,6 @@ public function editEvent(Request $request, $id)
         return response()->json(['errors' => ['allocatedItems' => ['Insufficient quantity in the inventory']]], 422);
     }
 
-
     $new_money = $old_money - $request->allocatedMoney;
     $treasury->update(['money' => $new_money]);
 
@@ -385,7 +384,7 @@ public function editEvent(Request $request, $id)
 
         if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
             $imageType = strtolower($type[1]);
-            
+
             if (!in_array($imageType, ['jpg', 'jpeg', 'png', 'gif'])) {
                 return response()->json(['errors' => ['image' => ['Invalid Image Type']]], 422);
             }
@@ -404,6 +403,9 @@ public function editEvent(Request $request, $id)
         } else {
             return response()->json(['errors' => ['image' => ['Invalid Image Type']]], 422);
         }
+    } else {
+        // Retain the old image if no new image is provided
+        $event->image = $event->getOriginal('image');
     }
 
     $volunteers = Volunteer::where('volunteer_status', 2)->get();
@@ -421,6 +423,8 @@ public function editEvent(Request $request, $id)
         return response()->json(['message' => 'Failed to update event'], 500);
     }
 }
+
+
 
 
 
